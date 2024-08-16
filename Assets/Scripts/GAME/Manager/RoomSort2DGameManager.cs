@@ -57,7 +57,7 @@ public class RoomSort2DGameManager : IDisposable
                     var placeholderGridView = hit.collider.GetComponentInParent<PlaceholderGridView>();
                     if (placeholderGridView != null)
                     {
-                        placeholderGridView.CheckRaycast();
+                        //placeholderGridView.CheckRaycast();
                     }
 
                 }
@@ -69,7 +69,7 @@ public class RoomSort2DGameManager : IDisposable
             {
                 foreach (var item in placeholderCheckOccupierDict)
                 {
-                    item.Key.SetOccupier()
+                    //item.Key.SetOccupier()
                 }
             }
             else
@@ -116,7 +116,7 @@ public class RoomSort2DGameManager : IDisposable
 
         foreach (var placeholderGrid in placeholderGridCotainerControllers.GetPlaceholderGrids)
         {
-            placeholderGrid.ON_RAYCAST += CheckRaycast;
+            //placeholderGrid.ON_RAYCAST += CheckRaycast;
         }
     }
     public void InitLevelFromView(List<GridContainerView> gridCntViews, PlaceholderGirdContainerView placeholderGridCntCntViews)
