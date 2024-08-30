@@ -24,7 +24,8 @@ public class GameStartBehaviour : MonoBehaviour
         var context = new Context();
         context.Install(
               new Injector(context),
-              new GameStateManager()
+              new GameStateManager(),
+              new PathFindingService()
           );
         context.Install(GetComponents<Component>());
         context.Install(_timer);

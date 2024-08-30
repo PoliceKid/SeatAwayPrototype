@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class Block : MonoBehaviour, IOccupier
+public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 {
     [SerializeField] private SpriteRenderer _spRd;
     [SerializeField] SpriteMask _indoorSrpiteMask;
@@ -22,7 +23,7 @@ public class Block : MonoBehaviour, IOccupier
         ApplyBlockType(_blockType);
         LocalDir = GetDirection();
         initColor = _spRd.color;
-
+        name = $"Pos X: {transform.localPosition.x}, Pos Z: {transform.localPosition.z}";
     }
     public void ApplyBlockType(BlockType blockType)
     {
@@ -55,25 +56,89 @@ public class Block : MonoBehaviour, IOccupier
 
     public Vector3 GetDirection()
     {
-        return transform.up.normalized;
+        return transform.forward.normalized;
     }
     public void OnPlaceable(bool isPlaceable)
     {
-        //_collider.enabled = !isPlaceable;
+        _spRd.color = !isPlaceable?Color.red: initColor;
+        validPlacable = isPlaceable;
     }
-    public BlockType GetBlockType()
+    private bool validPlacable;
+    public bool ValidPlaceable => validPlacable;
+    #region NEIGHBOR
+    public void SetNeighbor(Vector3 dir, Block block)
     {
-        return _blockType;
+        if (!_data.Neighbors.ContainsKey(dir))
+        {
+            _data.Neighbors.Add(dir, block);
+        }
     }
-    public void OnValidPlaceable(bool isValid)
+    public Block GetBlockNeighborByDirection( Vector3 dir)
     {
-        _spRd.color = !isValid?Color.red: initColor;
+        if (_data.Neighbors.ContainsKey(dir))
+        {
+           return _data.Neighbors[dir];
+        }
+        return null;
     }
+    public Dictionary<Vector3, Block> GetNeighbors() => _data.Neighbors;
+    #endregion
+    #region IMPLEMENTATION INTERFACE
+    public void SetOccupier(IOccupier occupier)
+    {
+        //if(occupier.GetType() == )
+        if (!_data.Occupiers.Contains(occupier))
+        {
+            _data.Occupiers.Add(occupier);
+        }
+    }
+
+    public void RemoveOccupier(IOccupier occupier)
+    {
+        if (_data.Occupiers.Contains(occupier))
+        {
+            _data.Occupiers.Remove(occupier);
+        }
+    }
+
+    public void ClearOccupiers()
+    {
+        _data.Occupiers.Clear();
+    }
+
+    public IOccupier GetLastOccupier()
+    {
+        return _data.Occupiers.Last();
+    }
+
+    public bool IsFullOccupier()
+    {
+      return _data.Occupiers.Count == 1;
+    }
+
+    public bool IsPlaceable()
+    {
+        return _data.Occupiers.Count == 0;
+    }
+
+    public bool IsOccupier()
+    {
+        return _data.Occupiers.Count > 0;
+    }
+
+    public string GetOccupierType()
+    {
+        return _blockType.ToString();
+    }
+    #endregion
+
     [SerializeField] 
     public class Data
     {
         public Transform initParent;
         public Vector3 initPoint;
+        public Dictionary<Vector3, Block> Neighbors = new Dictionary<Vector3, Block>();
+        public List<IOccupier> Occupiers = new List<IOccupier>();
     }
   
 }

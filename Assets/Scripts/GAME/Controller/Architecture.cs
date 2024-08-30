@@ -17,7 +17,7 @@ public class Architecture : MonoBehaviour
         foreach (Transform child in _gridSlotContainer)
         {
             Cell cell = child.GetComponent<Cell>();
-            if(cell != null)
+            if(cell != null && cell.gameObject.activeInHierarchy)
             {
                 cell.Init();
                 _data._cells.Add(cell);
@@ -29,17 +29,17 @@ public class Architecture : MonoBehaviour
     public void AddCell(Cell cell)
     {
         int x = (int)cell.transform.position.x;
-        int y = (int)cell.transform.position.y;
-        Vector2Int position = new Vector2Int(x, y);
+        int z = (int)cell.transform.position.z;
+        Vector2Int position = new Vector2Int(x, z);
         if (!_cellPositions.ContainsKey(position))
         {
             _cellPositions[position] = cell;
         }
     }
 
-    public Cell GetCell(int x, int y)
+    public Cell GetCell(int x, int z)
     {
-        Vector2Int position = new Vector2Int(x, y);
+        Vector2Int position = new Vector2Int(x, z);
         if (_cellPositions.ContainsKey(position))
         {
             return _cellPositions[position];
