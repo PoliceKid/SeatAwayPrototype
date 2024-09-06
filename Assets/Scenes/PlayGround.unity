@@ -376,6 +376,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2197668828537925229, guid: f32fafb0c860e2e4aaa8f698103fec09, type: 3}
+      propertyPath: orthographic size
+      value: 7.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7451286907977192475, guid: f32fafb0c860e2e4aaa8f698103fec09, type: 3}
       propertyPath: m_Name
       value: 'RoomSort2DGameManager '

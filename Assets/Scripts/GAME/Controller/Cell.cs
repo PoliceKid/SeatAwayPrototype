@@ -8,6 +8,7 @@ using Unity.VisualScripting;
 public class Cell :MonoBehaviour, IOccupierContainer<IOccupier> 
 {
     #region PROPERTIES
+    [SerializeField] MeshRenderer _renderer;
     [SerializeField] SpriteRenderer _spRd;
     [SerializeField] SpriteMask _indoorSrpiteMask;
     [SerializeField] SpriteMask _exdoorSrpiteMask;
@@ -31,7 +32,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         _data = new Data();
         initColor = _spRd.color;
         ApplyCellType(_cellType);
-        name = $"Pos X: {transform.position.x}, Pos Z: {transform.position.z}";
+        name = $"Cell Pos X: {transform.localPosition.x}, Pos Z: {transform.localPosition.z}";
         InitWall();
     }
     public void InitWall()
@@ -217,6 +218,13 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         }
 
     }
+    public bool IsChildOccupier()
+    {
+        if (!IsOccupier()) return false;
+        IOccupier occupier = GetLastOccupier();
+        Block block = occupier as Block;
+        return block.IsFullOccupier();
+    }
     public Vector3 GetDirection()
     {
         return transform.forward.normalized;
@@ -239,6 +247,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         if (!_data.Neighbors.ContainsKey(dir))
         {
             _data.Neighbors.Add(dir, cell);
+            Debug.Log($"{name} add neighbor : {cell.name}");
             SetWallActive(dir,cell);
           
         }
@@ -262,9 +271,20 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     #region VISUAL
     public void OnPlaceable(bool isPlaceable)
     {
-        _spRd.color = isPlaceable ? Color.green : initColor;
+        ChangeMaterialColor(isPlaceable ? Color.green : initColor);
     }
 
+    public void ChangeMaterialColor(Color newColor)
+    {
+        if (_renderer != null)
+        {
+            _renderer.material.color = newColor;
+        }
+        else
+        {
+            Debug.LogError("Material is not assigned in the inspector.");
+        }
+    }
     #endregion
     #region OTHER
 

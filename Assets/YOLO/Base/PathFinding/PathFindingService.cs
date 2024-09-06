@@ -1,42 +1,49 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class PathFindingService 
 {
     public List<Cell> FindPath(Cell startCell, Cell destinationCell)
     {
+        
         Dictionary<Cell, CellNode> cellNodes = new Dictionary<Cell, CellNode>();
-        Queue<CellNode> openList = new Queue<CellNode>();
+        SortedSet<CellNode> openList = new SortedSet<CellNode>(new CellNodeComparer());
 
-        CellNode startNode = new CellNode(startCell, 0, Vector3.Distance(startCell.transform.position, destinationCell.transform.position));
+        CellNode startNode = new CellNode(startCell, 0, Vector3.Distance(startCell.transform.localPosition, destinationCell.transform.localPosition));
         cellNodes.Add(startCell, startNode);
-        openList.Enqueue(startNode);
+        openList.Add(startNode);
 
         while (openList.Count > 0)
-        {
-            CellNode current = openList.Dequeue();
+        {           
+            CellNode current = openList.Min;
+            openList.Remove(current);
 
             if (current.cell == destinationCell)
             {
-                return ReconstructPath(cellNodes, current);
+                return ReconstructPath(startNode, current);
             }
-
+            
             foreach (var neighbor in current.cell.GetNeighbors().Values)
             {
-                if (neighbor.IsOccupier())
-                {
-                    continue;
+                if (neighbor.IsOccupier() && neighbor != destinationCell)
+                {                   
+                    continue;            
                 }
 
-                float newCost = current.cost + Vector3.Distance(current.cell.transform.position, neighbor.transform.position);
-                CellNode neighborNode;
-                if (!cellNodes.TryGetValue(neighbor, out neighborNode) || newCost < neighborNode.cost)
+                float newCost = current.cost + Vector3.Distance(current.cell.transform.localPosition, neighbor.transform.localPosition);
+                if (!cellNodes.TryGetValue(neighbor, out CellNode neighborNode) || newCost < neighborNode.cost)
                 {
-                    neighborNode = new CellNode(neighbor, newCost, Vector3.Distance(neighbor.transform.position, destinationCell.transform.position));
+                    neighborNode = new CellNode(neighbor, newCost, Vector3.Distance(neighbor.transform.localPosition, destinationCell.transform.localPosition));
                     cellNodes[neighbor] = neighborNode;
                     neighborNode.previous = current;
-                    openList.Enqueue(neighborNode);
+
+                    if (!openList.Contains(neighborNode))
+                    {
+                        openList.Add(neighborNode);
+                    }
                 }
             }
         }
@@ -44,13 +51,19 @@ public class PathFindingService
         return new List<Cell>(); // Destination cell is not reachable
     }
 
-    private List<Cell> ReconstructPath(Dictionary<Cell, CellNode> cellNodes, CellNode current)
+    private List<Cell> ReconstructPath(CellNode startNode, CellNode destinationNode)
     {
         List<Cell> path = new List<Cell>();
-        while (current != null)
+        CellNode currentNode = destinationNode;
+
+        while (currentNode != null)
         {
-            path.Add(current.cell);
-            current = current.previous;
+            path.Add(currentNode.cell);
+            currentNode = currentNode.previous;
+        }
+        if (!path.Contains(startNode.cell))
+        {
+            path.Add(startNode.cell);
         }
         path.Reverse();
         return path;
@@ -75,6 +88,20 @@ public class PathFindingService
             float fCost = cost + heuristicCost;
             float otherFCost = other.cost + other.heuristicCost;
             return fCost.CompareTo(otherFCost);
+        }
+    }
+    private class CellNodeComparer : IComparer<CellNode>
+    {
+        public int Compare(CellNode x, CellNode y)
+        {
+            float xFCost = x.cost + x.heuristicCost;
+            float yFCost = y.cost + y.heuristicCost;
+
+            if (xFCost == yFCost)
+            {
+                return x.heuristicCost.CompareTo(y.heuristicCost);
+            }
+            return xFCost.CompareTo(yFCost);
         }
     }
 }

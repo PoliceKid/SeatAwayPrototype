@@ -8,7 +8,7 @@ using UnityEngine;
 public class GameStartBehaviour : MonoBehaviour
 {
     private Timer _timer;
-
+    [SerializeField]private CoroutineHelper _coroutineHelper;
     public Context Context { get; private set; }
     private void Start()
     {
@@ -29,6 +29,7 @@ public class GameStartBehaviour : MonoBehaviour
           );
         context.Install(GetComponents<Component>());
         context.Install(_timer);
+        context.Install(_coroutineHelper);
         context.ApplyInstall();
 
         context.Get<GameStateManager>().SwitchToState(typeof(GameInitializeState));

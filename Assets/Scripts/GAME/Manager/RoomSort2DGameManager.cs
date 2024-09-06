@@ -9,6 +9,8 @@ public class RoomSort2DGameManager : IDisposable
 {
     #region CURRENT DATA
     [Inject] private Timer _timer;
+    [Inject] private PathFindingService _pathFindingService;
+    [Inject] private CoroutineHelper _coroutineHelper;
     private RoomSort2DGameView _gameView;
     public RoomSort2DGameManager(RoomSort2DGameView gameView)
     {
@@ -18,7 +20,8 @@ public class RoomSort2DGameManager : IDisposable
     private Architecture _architecture;
     private Room _currentRoomInteract;
     private Dictionary<Block, Cell> _blockRaycastedToCellDict = new Dictionary<Block, Cell>();
-    private List<Block> _blockPlaced = new List<Block>();
+    private Dictionary<Block,Cell> _blockPlacedOnCell = new Dictionary<Block, Cell> ();
+    private List<Gateway> _gateWays = new List<Gateway>();
     private StageManager _stageManager;
     private bool hasInit;
     #endregion
@@ -46,10 +49,16 @@ public class RoomSort2DGameManager : IDisposable
     {
 
     }
-    private void InitLevelFromView(Transform roomParentCotainer, Transform architectureContainer)
+    private void InitLevelFromView(Transform roomParentCotainer, Transform architectureContainer, Transform gateWayContainer)
     {
         InitRoomFromView(roomParentCotainer);
         InitArchitectureFromView(architectureContainer);
+        InitUnitFromView(gateWayContainer);
+        var path = _pathFindingService.FindPath(_architecture.GetCells.First(), _architecture.GetCells.Last());
+        foreach (var cell in path)
+        {
+            cell.OnPlaceable(true);
+        }
     }
     private void InitRoomFromView(Transform roomContainer)
     {
@@ -60,10 +69,25 @@ public class RoomSort2DGameManager : IDisposable
             {
                 room.Init();
                 _rooms.Add(room);
+                room.OnCompleteRoom += HandleCompleteRoom;
             }
         }
         InitNeighborBlockFromRoom(_rooms);
     }
+
+    private void HandleCompleteRoom(List<Block> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            Cell cellConaintBlock = _architecture.GetCells.FirstOrDefault(x => x.GetOccupier().Contains(block));
+
+            if(cellConaintBlock != null)
+            {
+                cellConaintBlock.ClearOccupiers();
+            }
+        }
+    }
+
     private void InitArchitectureFromView(Transform architectureContainer)
     {
         foreach (Transform child in architectureContainer)
@@ -77,6 +101,18 @@ public class RoomSort2DGameManager : IDisposable
         }
         InitNeighborCellArchitecture(_architecture);
         
+    }
+    private void InitUnitFromView(Transform gateWayContainer)
+    {
+        foreach (Transform child in gateWayContainer)
+        {
+            Gateway gateWay = child.GetComponent<Gateway>();
+            if (gateWay != null)
+            {
+                gateWay.Init();
+                _gateWays.Add(gateWay);
+            }
+        }
     }
     #endregion
     #region UPDATE BEHAVIOUR
@@ -318,14 +354,44 @@ public class RoomSort2DGameManager : IDisposable
             if (block == null || cell == null) continue;
 
             block.transform.parent = cell.transform;
-            block.transform.localPosition = new Vector3(0, 5, 0);
+            block.transform.localPosition = new Vector3(0, 0, 0);
             cell.SetOccupier(block);
-            if (!_blockPlaced.Contains(block))
+            if (!_blockPlacedOnCell.ContainsKey(block))
             {
-                _blockPlaced.Add(block);
+                _blockPlacedOnCell.Add(block, cell);
             }
-     
+            else
+            {
+                _blockPlacedOnCell[block] = cell;
+            }
+            
         }
+       
+        _coroutineHelper.DoActionOnTime(() =>
+        {
+            foreach (var gateway in _gateWays)
+            {
+                gateway.DequeueUnitLoop((unit) =>
+                {
+                    if (unit != null)
+                    {
+                        Block block = GetBlockValiable(gateway.GetConnectedCell, unit.GetOccupierType(), out List<Cell> cellPath);
+                        if (block != null)
+                        {
+                            block.SetOccupier(unit);
+                            List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
+                            unit.MoveThroughPoints(pathPositions);
+                            gateway.DequeueUnit();
+                        }
+
+                    }
+
+                });
+
+            }
+        },0);
+       
+       
         SetPlaceableCellCondition(_blockCheckRaycastDict.Values.ToList());
     }         
     public void DisplaceableRoom(List<Block> blocks, Room _currentRoomInteract)
@@ -355,12 +421,37 @@ public class RoomSort2DGameManager : IDisposable
                 cell?.RemoveOccupier(block);
             }
             SetPlaceableCellCondition(cellValiableCondition);
-            if (_blockPlaced.Contains(block))
+            if (_blockPlacedOnCell.ContainsKey(block))
             {
-                _blockPlaced.Remove(block);
+                _blockPlacedOnCell.Remove(block);
             }
         }
     }
+    public Block GetBlockValiable(Cell startCell,string codeName, out List<Cell> cellPath)
+    {
+        cellPath = null;
+        if (startCell.IsChildOccupier())
+        {
+            return null;
+        }
+        _blockPlacedOnCell = _blockPlacedOnCell.OrderBy(x => Vector3.Distance(x.Value.transform.localPosition, startCell.transform.localPosition)).ToDictionary(x => x.Key, y => y.Value);
+        foreach (var blockOnCell in _blockPlacedOnCell)
+        {
+            Cell cell = blockOnCell.Value;
+            Block block = blockOnCell.Key;
+            if(cell == null || block == null) continue;
+
+            if (block.IsFullOccupier()) continue;
+            if (block.GetData.CodeName != codeName) continue;
+             cellPath = _pathFindingService.FindPath(startCell, cell);
+
+            if(cellPath.Count == 0) continue;
+            return cellPath.Count>0 ? block : null;
+        }
+        return null;
+        
+    }
+  
     #endregion
     #region ARCHITECTURE API
     #region NEIGHBOR 
@@ -402,8 +493,8 @@ public class RoomSort2DGameManager : IDisposable
         // Các chỉ số offset cho 4 hướng
         for (int i = 0; i < directions.GetLength(0); i++)
         {
-            int newX = (int)cell.transform.position.x + directions[i, 0];
-            int newZ = (int)cell.transform.position.z + directions[i, 1];
+            int newX = (int)cell.transform.localPosition.x + directions[i, 0];
+            int newZ = (int)cell.transform.localPosition.z + directions[i, 1];
 
             // Kiểm tra nếu (newX, newY) có Cell hay không
             Cell neighbor = _architecture.GetCell(newX, newZ);
@@ -418,8 +509,8 @@ public class RoomSort2DGameManager : IDisposable
     public Cell GetCellNeighborByDirection(Cell cell, Vector3 dir)
     {
         if (_architecture == null) return null;
-        int newX = (int)cell.transform.position.x + (int)dir.x;
-        int newY = (int)cell.transform.position.z + (int)dir.z;
+        int newX = (int)cell.transform.localPosition.x + (int)dir.x;
+        int newY = (int)cell.transform.localPosition.z + (int)dir.z;
         Cell neighbor = _architecture.GetCell(newX, newY);
         return neighbor;
     }
@@ -503,7 +594,7 @@ public class RoomSort2DGameManager : IDisposable
             LevelContainer levelContainer = _gameView.LoadLevel(level, Vector3.zero, Quaternion.identity);
             if(levelContainer != null)
             {
-                InitLevelFromView(levelContainer.GetRoomContainer, levelContainer.GetArchitectureContainer);
+                InitLevelFromView(levelContainer.GetRoomContainer, levelContainer.GetArchitectureContainer,levelContainer.GetGateWayContainer);
             }
         }
     }
@@ -526,7 +617,13 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
     #endregion
-
+    #region UNIT API
+    public Unit GetFirstUnit(Gateway gateway)
+    {
+        return gateway.DequeueUnit();
+    }
+    
+    #endregion
 }
 [Serializable]
 public class Stage
@@ -544,4 +641,12 @@ public enum PlaceableState
     Placed,
     Placeable,
     Free
+}
+public enum CodeNameType
+{
+    Blue,
+    Red,
+    Yellow,
+    Green,
+    Purple
 }

@@ -28,8 +28,8 @@ public class Architecture : MonoBehaviour
     #region CELL API
     public void AddCell(Cell cell)
     {
-        int x = (int)cell.transform.position.x;
-        int z = (int)cell.transform.position.z;
+        int x = (int)cell.transform.localPosition.x;
+        int z = (int)cell.transform.localPosition.z;
         Vector2Int position = new Vector2Int(x, z);
         if (!_cellPositions.ContainsKey(position))
         {

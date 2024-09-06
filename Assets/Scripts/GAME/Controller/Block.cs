@@ -2,28 +2,47 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
+using UnityEngine.AI;
+using System;
 
 public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 {
+    #region PROPERTY
+    [SerializeField] MeshRenderer _renderer;
+    [SerializeField] CodeNameType _codeNameType;
     [SerializeField] private SpriteRenderer _spRd;
     [SerializeField] SpriteMask _indoorSrpiteMask;
     [SerializeField] SpriteMask _exdoorSrpiteMask;
     [SerializeField] private Transform _door;
     [SerializeField] private BlockType _blockType;
     [SerializeField] BoxCollider _collider;
+    [SerializeField] GameObject _wallLeft;
+    [SerializeField] GameObject _wallRight;
+    [SerializeField] GameObject _wallTop;
+    [SerializeField] GameObject _wallBottom;
+    #endregion
+    #region CURRENT DATA
     private Data _data;
     public Data GetData => _data;
     public Vector3 LocalDir;
     private Color initColor;
+    public bool IsOnUnitDestination = false;
+    public System.Action<Block> OnUnitDestionation = delegate { };
+
+    #endregion
     public void Init(Transform parent)
     {
         _data = new Data();
         _data.initPoint = transform.localPosition;
         _data.initParent = parent;
+        _data.CodeName = _codeNameType.ToString();
         ApplyBlockType(_blockType);
+        ApplyColor(_codeNameType);
+        InitWall();
         LocalDir = GetDirection();
         initColor = _spRd.color;
-        name = $"Pos X: {transform.localPosition.x}, Pos Z: {transform.localPosition.z}";
+        name = $"Block Pos X: {transform.localPosition.x}, Pos Z: {transform.localPosition.z}";
     }
     public void ApplyBlockType(BlockType blockType)
     {
@@ -44,6 +63,63 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
                 _spRd.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
                 _indoorSrpiteMask.gameObject.SetActive(false);
                 _exdoorSrpiteMask.gameObject.SetActive(true);
+                break;
+            default:
+                break;
+        }
+    }
+    public void InitWall()
+    {
+        if (_blockType != BlockType.Normal) return;
+        _wallLeft.gameObject.SetActive(true);
+        _wallRight.gameObject.SetActive(true);
+        _wallTop.gameObject.SetActive(true);
+        _wallBottom.gameObject.SetActive(true);
+    }
+    private static Vector3[] dir = new Vector3[] { Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
+    public void SetWallActive(Vector3 dirNotFaceWall, BlockType type)
+    {
+        bool canSetNeighborWall = type == BlockType.Normal;
+        //dirNotFaceWall *= GetDirection().z;
+        if (dirNotFaceWall.normalized == Vector3.left && canSetNeighborWall)
+        {
+            _wallLeft.gameObject.SetActive(false);
+        }
+        if (dirNotFaceWall.normalized == Vector3.right && canSetNeighborWall)
+        {
+            _wallRight.gameObject.SetActive(false);
+        }
+        if (dirNotFaceWall.normalized == Vector3.forward && canSetNeighborWall)
+        {
+            _wallTop.gameObject.SetActive(false);
+        }
+        if (dirNotFaceWall.normalized == Vector3.back && canSetNeighborWall)
+        {
+            _wallBottom.gameObject.SetActive(false);
+        }
+    }
+    public void ApplyColor(CodeNameType codeNameType)
+    {
+        switch (codeNameType)
+        {
+            case CodeNameType.Blue:
+                _renderer.material.color = Color.blue;
+                break;
+            case CodeNameType.Red:
+                _renderer.material.color = Color.red;
+
+                break;
+            case CodeNameType.Yellow:
+                _renderer.material.color = Color.yellow;
+
+                break;
+            case CodeNameType.Green:
+                _renderer.material.color = Color.green;
+
+                break;
+            case CodeNameType.Purple:
+                _renderer.material.color = Color.white;
+
                 break;
             default:
                 break;
@@ -71,7 +147,9 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         if (!_data.Neighbors.ContainsKey(dir))
         {
             _data.Neighbors.Add(dir, block);
+            SetWallActive(dir, block._blockType);
         }
+        
     }
     public Block GetBlockNeighborByDirection( Vector3 dir)
     {
@@ -90,6 +168,11 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         if (!_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Add(occupier);
+            occupier.InitOccupier(() =>
+            {
+                OnUnitDestionation.Invoke(this);
+                
+            });
         }
     }
 
@@ -130,11 +213,17 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         return _blockType.ToString();
     }
+    public void InitOccupier(Action callBack = null)
+    {
+        
+    }
     #endregion
+
 
     [SerializeField] 
     public class Data
     {
+        public string CodeName;
         public Transform initParent;
         public Vector3 initPoint;
         public Dictionary<Vector3, Block> Neighbors = new Dictionary<Vector3, Block>();

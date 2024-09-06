@@ -11,6 +11,8 @@ public interface IOccupier
     public string GetOccupierType();
     public Vector3 GetDirection();
     public void OnPlaceable(bool isValid);
+    public void InitOccupier(System.Action callBack = null);
+    
 }
 public interface IOccupierContainer<T> where T : IOccupier
 {
