@@ -30,11 +30,10 @@ public class Gateway : MonoBehaviour
     }
     public Unit DequeueUnit()
     {
-        Unit unit = _unitQueue.Dequeue();
-        MoveUnitsInQueue();
+        Unit unit = _unitQueue.Dequeue();       
         return unit;
     }
-    private void MoveUnitsInQueue()
+    public void MoveUnitsInQueue()
     {
         Queue<Unit> _unitQueueTemp = new Queue<Unit>(_unitQueue);
         foreach (var queuePos in _unitQueuePos)
@@ -42,7 +41,7 @@ public class Gateway : MonoBehaviour
             if(_unitQueueTemp.Count > 0)
             {
                 Unit nextUnit = _unitQueueTemp.Dequeue();
-                nextUnit.MoveThroughPoints(new List<Vector3> { queuePos });
+                nextUnit.MoveTo(new List<Vector3> { queuePos });
             }
             
         }   

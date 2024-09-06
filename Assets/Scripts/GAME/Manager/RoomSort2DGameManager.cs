@@ -380,13 +380,14 @@ public class RoomSort2DGameManager : IDisposable
                         {
                             block.SetOccupier(unit);
                             List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
-                            unit.MoveThroughPoints(pathPositions);
+                            unit.MoveTo(pathPositions);
                             gateway.DequeueUnit();
                         }
 
                     }
 
                 });
+                gateway.MoveUnitsInQueue();
 
             }
         },0);

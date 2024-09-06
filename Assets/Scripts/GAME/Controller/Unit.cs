@@ -41,15 +41,15 @@ public class Unit : MonoBehaviour, IOccupier
     {
         
     }
-    public void MoveThroughPoints(List<Vector3> cellPositions)
+    public void MoveTo(List<Vector3> cellPositions)
     {
         if(cellPositions == null) return;
         if (cellPositions.Count > 0)
         {
-            StartCoroutine(StartMoveThroughPoints(cellPositions));
+            StartCoroutine(StartMove(cellPositions));
         }
     }
-    IEnumerator StartMoveThroughPoints(List<Vector3> cellPositions)
+    IEnumerator StartMove(List<Vector3> cellPositions)
     {
         int currentCellIndex = 0;
         while (currentCellIndex < cellPositions.Count)
