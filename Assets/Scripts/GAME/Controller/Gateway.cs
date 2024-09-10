@@ -38,19 +38,21 @@ public class Gateway : MonoBehaviour
         Queue<Unit> _unitQueueTemp = new Queue<Unit>(_unitQueue);
         foreach (var queuePos in _unitQueuePos)
         {
-            if(_unitQueueTemp.Count > 0)
+            if (_unitQueueTemp.Count > 0)
             {
                 Unit nextUnit = _unitQueueTemp.Dequeue();
                 nextUnit.MoveTo(new List<Vector3> { queuePos });
             }
-            
-        }   
+        }
     }
-  
-    public void DequeueUnitLoop(System.Action<Unit> callBack = null)
+
+    public void DequeueUnitLoop(System.Func<Unit,bool> callBack = null)
     {
+        if (_unitQueue.Count == 0) return;
         foreach (Unit unit in _unitQueue.ToList()) {     
-            callBack?.Invoke(unit);
+            //callBack?.Invoke(unit);
+            bool canContinue = callBack(unit);
+            if (!canContinue) return;
         }
     }
 

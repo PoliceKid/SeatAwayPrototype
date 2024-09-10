@@ -18,6 +18,7 @@ public class Unit : MonoBehaviour, IOccupier
     {
         _data = new UnitData();
         _data.CodeName = _codeNameType.ToString();
+        ApplyColor(_codeNameType);
     }
     public Vector3 GetDirection()
     {
@@ -69,8 +70,36 @@ public class Unit : MonoBehaviour, IOccupier
         }
         OnUnitDestination?.Invoke();
     }
+    #region VISUAL
+    public void ApplyColor(CodeNameType codeNameType)
+    {
+        switch (codeNameType)
+        {
+            case CodeNameType.Blue:
+                _renderer.material.color = Color.blue;
+                break;
+            case CodeNameType.Red:
+                _renderer.material.color = Color.red;
 
- 
+                break;
+            case CodeNameType.Yellow:
+                _renderer.material.color = Color.yellow;
+
+                break;
+            case CodeNameType.Green:
+                _renderer.material.color = Color.green;
+
+                break;
+            case CodeNameType.Purple:
+                _renderer.material.color = Color.white;
+
+                break;
+            default:
+                break;
+        }
+    }
+    #endregion
+
 
     [System.Serializable]
     public class UnitData

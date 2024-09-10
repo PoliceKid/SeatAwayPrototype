@@ -1,4 +1,5 @@
-﻿using Game.Core;
+﻿using DG.Tweening;
+using Game.Core;
 using Injection;
 using System;
 using System.Collections.Generic;
@@ -81,11 +82,45 @@ public class RoomSort2DGameManager : IDisposable
         {
             Cell cellConaintBlock = _architecture.GetCells.FirstOrDefault(x => x.GetOccupier().Contains(block));
 
-            if(cellConaintBlock != null)
+            if (cellConaintBlock != null)
             {
                 cellConaintBlock.ClearOccupiers();
             }
         }
+        CheckUnitMoveToBlock(_gateWays);
+        CheckGameWin(_rooms);
+    }
+
+    private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
+    {
+        foreach (var gateway in _gateWays)
+        {
+            bool gatewayCanUpdateQueue = false;
+            gateway.DequeueUnitLoop((unit) =>
+            {
+
+                if (unit != null)
+                {
+                    Block block = GetBlockValiable(gateway.GetConnectedCell, unit.GetOccupierType(), out List<Cell> cellPath);
+                    if (block == null) {
+                        return false;
+
+                    }
+                    block.SetOccupier(unit);
+                    List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
+                    unit.MoveTo(pathPositions);
+                    gateway.DequeueUnit();
+                    gatewayCanUpdateQueue = true;
+                    return true;
+
+                }
+                return false;
+            });
+            if(gatewayCanUpdateQueue)
+            gateway.MoveUnitsInQueue();
+
+        }
+        
     }
 
     private void InitArchitectureFromView(Transform architectureContainer)
@@ -218,7 +253,7 @@ public class RoomSort2DGameManager : IDisposable
             {
                 PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
                 _currentRoomInteract.ChangePlaceableState(PlaceableState.Placed);
-                CheckGameWin(_architecture);
+                
             }
             else
             {
@@ -234,37 +269,14 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
 
-    private void CheckGameWin(Architecture _architecture)
+    private void CheckGameWin(List<Room> _rooms)
     {
-        if (_architecture.GetCells.Count == 0) return;
-        if(_architecture.GetCells.All(x => x.IsFullOccupier())){
+        if (_rooms.Count == 0) return;
+        if(_rooms.All(x => x.IsComplete())){
             Debug.Log("Game WINN");
             OnLevelComplete();
         }
     
-    }
-
-    public bool CheckBlockPlaceable(Block block)
-    {
-        if (block == null) return false;
-        if (block.GetOccupierType() != BlockType.Normal.ToString())
-        {
-            //Vector3 landBlockPoint = new Vector3(block.transform.position.x, block.transform.position.y, 0);
-            Vector3 landBlockPoint = block.transform.position;
-            Ray landBlockRay = new Ray(landBlockPoint, Vector2.up * (block.GetOccupierType() == BlockType.Exdoor.ToString() ? 1 : -1));
-            if (Physics.RaycastNonAlloc(landBlockRay, _raycastHits, 0.622f, _gameView.GetBlockLayerMask) > 0)
-            {
-                Block blockRayast = _raycastHits[0].collider.GetComponentInParent<Block>();
-                if (blockRayast != null)
-                {
-                    if (blockRayast.GetOccupierType() == BlockType.Normal.ToString()) return false;
-                    bool result = blockRayast.GetOccupierType() == (block.GetOccupierType() == BlockType.Exdoor.ToString() ? BlockType.Indoor.ToString() : BlockType.Exdoor.ToString());
-                    return result;
-                }
-
-            }
-        }
-        return true;
     }
     public void SetBlockRaycastToCell(Block blockRaycast, Cell cell)
     {
@@ -369,27 +381,7 @@ public class RoomSort2DGameManager : IDisposable
        
         _coroutineHelper.DoActionOnTime(() =>
         {
-            foreach (var gateway in _gateWays)
-            {
-                gateway.DequeueUnitLoop((unit) =>
-                {
-                    if (unit != null)
-                    {
-                        Block block = GetBlockValiable(gateway.GetConnectedCell, unit.GetOccupierType(), out List<Cell> cellPath);
-                        if (block != null)
-                        {
-                            block.SetOccupier(unit);
-                            List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
-                            unit.MoveTo(pathPositions);
-                            gateway.DequeueUnit();
-                        }
-
-                    }
-
-                });
-                gateway.MoveUnitsInQueue();
-
-            }
+            CheckUnitMoveToBlock(_gateWays);
         },0);
        
        

@@ -9,7 +9,7 @@ public class Room : MonoBehaviour
 {
     [SerializeField] Transform _gridContainer;
     [SerializeField] SortingGroup _sortingGroup;
-    public List<Block> GetBlocks => _data._blocks;
+    public List<Block> GetBlocks => _data.Blocks;
     private Dictionary<Vector2Int, Block> _blockPositions;
     private Dictionary<Block, bool> _blockOnDestination;
     private Data _data;
@@ -26,14 +26,15 @@ public class Room : MonoBehaviour
             if (block != null)
             {
                 block.Init(this.transform);
-                _data._blocks.Add(block);
+                _data.Blocks.Add(block);
                 AddBlock(block);
                 InitBlockDestionation(block);
                 block.OnUnitDestionation += HandleBlockUnitDestionation;
             }
         }
-        _data.initPoint = transform.localPosition;
+        _data.InitPoint = transform.localPosition;
         _state = PlaceableState.Free;
+        
     }
 
     private void InitBlockDestionation(Block block)
@@ -58,6 +59,7 @@ public class Room : MonoBehaviour
                 block1.GetLastOccupier().OnPlaceable(true);
                 
             }
+            SetComplete(true);
             OnCompleteRoom?.Invoke(GetBlocks);
         }
     }
@@ -77,7 +79,7 @@ public class Room : MonoBehaviour
     }
     public void ResetPosition()
     {
-        transform.localPosition = _data.initPoint;
+        transform.localPosition = _data.InitPoint;
     }
     public void AddBlock(Block block)
     {
@@ -99,6 +101,14 @@ public class Room : MonoBehaviour
         }
         return null;
     }
+    public void SetComplete(bool isComplete)
+    {
+        _data.IsCompelete = isComplete;
+    }
+    public bool IsComplete()
+    {
+        return _data.IsCompelete;
+    }
     #region PLACEABLE STATE
     public PlaceableState GetPlaceableState => _state;
     public void ChangePlaceableState(PlaceableState newState)
@@ -109,11 +119,19 @@ public class Room : MonoBehaviour
     [SerializeField]
     public class Data
     {
-        public List<Block> _blocks = new List<Block>();
-        public Vector3 initPoint;
+        private bool _isCompelete;
+        private List<Block> _blocks = new List<Block>();
+        private Vector3 _initPoint;
+        public Vector3 InitPoint { get => _initPoint; set => _initPoint = value; }
+        public List<Block> Blocks { get => _blocks; set => _blocks = value; }
+        public bool IsCompelete { get => _isCompelete; set => _isCompelete = value; }
+
         public Data()
         {
             _blocks = new List<Block>();
+            _isCompelete = false;
         }
+
+   
     }
 }

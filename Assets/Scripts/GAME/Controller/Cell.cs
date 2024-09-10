@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
-using static Cell;
-using Unity.VisualScripting;
 public class Cell :MonoBehaviour, IOccupierContainer<IOccupier> 
 {
     #region PROPERTIES
@@ -207,15 +205,16 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     }
     public bool IsFullOccupier()
     {
-        if(_cellType == BlockType.Normal)
-        {
-            return _data.Occupiers.Count == 2 || (_data.Occupiers.Count == 1 && GetOccupier().First().GetOccupierType() == BlockType.Normal.ToString());
+        //if(_cellType == BlockType.Normal)
+        //{
+        //    return _data.Occupiers.Count == 2 || (_data.Occupiers.Count == 1 && GetOccupier().First().GetOccupierType() == BlockType.Normal.ToString());
 
-        }
-        else
-        {
-            return _data.Occupiers.Count == 1;
-        }
+        //}
+        //else
+        //{
+        //    return _data.Occupiers.Count == 1;
+        //}
+        return _data.Occupiers.Count == 1;
 
     }
     public bool IsChildOccupier()
