@@ -9,11 +9,14 @@ public class InterfaceContainer
 public interface IOccupier
 {
     public string GetOccupierType();
+    public string GetCodeNameType();
     public Vector3 GetDirection();
     public void OnPlaceable(bool isValid);
-    public void InitOccupier(System.Action callBack = null);
-    
+    public void InitOccupier(GameObject parent,System.Action callBack = null);
+    public GameObject GetParent();
+    public void ClearParent();
 }
+
 public interface IOccupierContainer<T> where T : IOccupier
 {
     void SetOccupier(T occupier);

@@ -423,9 +423,16 @@ public class RoomSort2DGameManager : IDisposable
     public Block GetBlockValiable(Cell startCell,string codeName, out List<Cell> cellPath)
     {
         cellPath = null;
-        if (startCell.IsChildOccupier())
+        if (startCell.IsOccupier())
         {
-            return null;
+            if(startCell.GetLastOccupier().GetCodeNameType() != codeName)
+            {
+                return null;
+            }
+            if (startCell.IsChildOccupier())
+            {
+                return null;
+            }
         }
         _blockPlacedOnCell = _blockPlacedOnCell.OrderBy(x => Vector3.Distance(x.Value.transform.localPosition, startCell.transform.localPosition)).ToDictionary(x => x.Key, y => y.Value);
         foreach (var blockOnCell in _blockPlacedOnCell)

@@ -183,6 +183,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         if (!_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Add(occupier);
+            occupier.InitOccupier(this.gameObject);
         }
 
     }
@@ -195,6 +196,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         if (_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Remove(occupier);
+            occupier.ClearParent();
         }
     }
     public List<IOccupier> GetOccupier() => _data.Occupiers;

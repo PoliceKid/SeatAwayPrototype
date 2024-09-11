@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
-using UnityEngine.AI;
 using System;
 
 public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
@@ -16,6 +14,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     [SerializeField] SpriteMask _exdoorSrpiteMask;
     [SerializeField] private Transform _door;
     [SerializeField] private BlockType _blockType;
+    [SerializeField] private GameObject _unitContainer;
     [SerializeField] BoxCollider _collider;
     [SerializeField] GameObject _wallLeft;
     [SerializeField] GameObject _wallRight;
@@ -29,7 +28,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     private Color initColor;
     public bool IsOnUnitDestination = false;
     public System.Action<Block> OnUnitDestionation = delegate { };
-
+    private GameObject _parent;
     #endregion
     public void Init(Transform parent)
     {
@@ -168,11 +167,12 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         if (!_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Add(occupier);
-            occupier.InitOccupier(() =>
+            occupier.InitOccupier(this.gameObject,() =>
             {
                 OnUnitDestionation.Invoke(this);
                 
             });
+
         }
     }
 
@@ -181,6 +181,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         if (_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Remove(occupier);
+            occupier.ClearParent();
         }
     }
 
@@ -213,10 +214,29 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         return _blockType.ToString();
     }
-    public void InitOccupier(Action callBack = null)
+    public string GetCodeNameType()
     {
-        
+        return _codeNameType.ToString();
     }
+    public void InitOccupier(GameObject parent, Action callBack = null)
+    {
+        _parent = parent;
+    }
+
+    public GameObject GetParent()
+    {
+        return _parent;
+    }
+
+    public void ClearParent()
+    {
+        _parent = null;
+    }
+
+   
+
+
+
     #endregion
 
 

@@ -13,7 +13,7 @@ public class Unit : MonoBehaviour, IOccupier
     #endregion
     public System.Action OnUnitDestination = delegate { };
     private UnitData _data;
-
+    private GameObject _parent;
     public void Init()
     {
         _data = new UnitData();
@@ -29,14 +29,28 @@ public class Unit : MonoBehaviour, IOccupier
     {
         return _data.CodeName;
     }
+    public string GetCodeNameType()
+    {
+        return _codeNameType.ToString();
+    }
+    public void InitOccupier(GameObject parent,Action callBack)
+    {
+        OnUnitDestination += callBack;
+        _parent = parent;
+        transform.parent = _parent.transform;
+    }
 
     public void OnPlaceable(bool isValid)
     {
         gameObject.SetActive(false);
     }
-    public void InitOccupier(Action callBack)
+    public GameObject GetParent()
     {
-        OnUnitDestination += callBack;
+       return _parent;
+    }
+    public void ClearParent()
+    {
+        _parent = null;
     }
     public void MoveTo(Vector3 pos)
     {
@@ -98,6 +112,8 @@ public class Unit : MonoBehaviour, IOccupier
                 break;
         }
     }
+
+  
     #endregion
 
 
