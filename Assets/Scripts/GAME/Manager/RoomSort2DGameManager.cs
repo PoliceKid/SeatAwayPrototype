@@ -57,9 +57,9 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
-    public int CountBlockPlacedEmpty()
+    public List<Block> GetBlockPlacedEmpty()
     {
-        return _blockPlacedOnCell.Count(x => !x.Key.IsFullOccupier());
+        return _blockPlacedOnCell.Keys.Where(x => !x.IsFullOccupier()).ToList();
     }
     public Queue<Unit> GetAllUnitSortedQueue(List<Gateway> _gateWays)
     {
@@ -72,13 +72,17 @@ public class RoomSort2DGameManager : IDisposable
     public int GetACount()
     {
         int unitCount = GetAllUnitQueueCount(_gateWays);
-        int blockEmptyCount = CountBlockPlacedEmpty();
+        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
+        if (blockPlacedEmpties == null) return 0;
+        int blockEmptyCount = blockPlacedEmpties.Count;
         int count = unitCount - blockEmptyCount;
         return count;
     }
     public int GetBCount()
     {
-        int cellPlacableCount = _architecture.GetCells.Count - CountBlockPlacedEmpty();
+        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
+        if (blockPlacedEmpties == null) return 0;
+        int cellPlacableCount = _architecture.GetCells.Count - blockPlacedEmpties.Count;
 
         return cellPlacableCount;
     }
@@ -514,7 +518,20 @@ public class RoomSort2DGameManager : IDisposable
         _roomSpawner.Clear();
         Debug.Log("CountA: " + countA);
         Debug.Log("CountB: " + countB);
-
+        List<Unit> ListUnitExcept = new List<Unit>();
+        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
+        if (blockPlacedEmpties != null)
+        {
+            foreach (var block in blockPlacedEmpties)
+            {
+                Unit unitAlreadyHasCodename = UnitSortByCodename.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
+                if (unitAlreadyHasCodename != null)
+                {
+                    ListUnitExcept.Add(unitAlreadyHasCodename);
+                }
+            }
+            UnitSortByCodename = new Queue<Unit>(UnitSortByCodename.Where(x => !ListUnitExcept.Contains(x)));
+        }
         //Room1
         int count = Mathf.Min(countA, countB);
         if (count < 1)
