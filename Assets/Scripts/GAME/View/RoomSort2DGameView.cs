@@ -13,7 +13,7 @@ public class RoomSort2DGameView : MonoBehaviour
     public LayerMask GetCellLayerMask => _cellLayerMask;
     public Transform GetLevelContainer => _levelContainer;
 
-    public LevelContainer LoadLevel(GameObject levelPrefab, Vector3 point, Quaternion quaternion)
+    public LevelContainer SpawnLevel(GameObject levelPrefab, Vector3 point, Quaternion quaternion)
     {
         foreach (Transform child in _levelContainer)
         {
@@ -28,5 +28,15 @@ public class RoomSort2DGameView : MonoBehaviour
         }
         return null;
     }
+    public Room SpawnRoom(GameObject roomPrefab, Vector3 point, Quaternion quaternion,Transform parent)
+    {
+        GameObject roomGO = Instantiate(roomPrefab, point, quaternion, parent);
+        if (roomGO != null)
+        {
+            Room room = roomGO.GetComponent<Room>();
 
+            return room;
+        }
+        return null;
+    }
 }

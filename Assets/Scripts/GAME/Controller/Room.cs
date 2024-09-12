@@ -7,25 +7,28 @@ using UnityEngine.Rendering;
 
 public class Room : MonoBehaviour
 {
-    [SerializeField] Transform _gridContainer;
+    [SerializeField] float _weight;
+    [SerializeField] Transform _BlockContainer;
     [SerializeField] SortingGroup _sortingGroup;
     public List<Block> GetBlocks => _data.Blocks;
+    public float GetWeight => _weight;
+    public int GetBlockCount => _BlockContainer.childCount;
     private Dictionary<Vector2Int, Block> _blockPositions;
     private Dictionary<Block, bool> _blockOnDestination;
     private Data _data;
     private PlaceableState _state;
     public System.Action<List<Block>> OnCompleteRoom = delegate { };
+
     public void Init()
     {
         _data = new Data();
         _blockPositions = new Dictionary<Vector2Int, Block>();
         _blockOnDestination = new Dictionary<Block, bool>();
-        foreach (Transform child in _gridContainer)
+        foreach (Transform child in _BlockContainer)
         {
             Block block = child.GetComponent<Block>();
             if (block != null)
             {
-                block.Init(this.transform);
                 _data.Blocks.Add(block);
                 AddBlock(block);
                 InitBlockDestionation(block);
@@ -111,6 +114,9 @@ public class Room : MonoBehaviour
     }
     #region PLACEABLE STATE
     public PlaceableState GetPlaceableState => _state;
+
+
+
     public void ChangePlaceableState(PlaceableState newState)
     {
         _state = newState;

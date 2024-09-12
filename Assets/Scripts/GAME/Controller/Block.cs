@@ -8,7 +8,6 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 {
     #region PROPERTY
     [SerializeField] MeshRenderer _renderer;
-    [SerializeField] CodeNameType _codeNameType;
     [SerializeField] private SpriteRenderer _spRd;
     [SerializeField] SpriteMask _indoorSrpiteMask;
     [SerializeField] SpriteMask _exdoorSrpiteMask;
@@ -30,14 +29,14 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     public System.Action<Block> OnUnitDestionation = delegate { };
     private GameObject _parent;
     #endregion
-    public void Init(Transform parent)
+    public void Init(CodeNameType codeNameType,Transform parent)
     {
         _data = new Data();
         _data.initPoint = transform.localPosition;
         _data.initParent = parent;
-        _data.CodeName = _codeNameType.ToString();
+        _data.CodeName = codeNameType.ToString();
         ApplyBlockType(_blockType);
-        ApplyColor(_codeNameType);
+        ApplyColor(codeNameType);
         InitWall();
         LocalDir = GetDirection();
         initColor = _spRd.color;
@@ -163,7 +162,6 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     #region IMPLEMENTATION INTERFACE
     public void SetOccupier(IOccupier occupier)
     {
-        //if(occupier.GetType() == )
         if (!_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Add(occupier);
@@ -214,9 +212,9 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         return _blockType.ToString();
     }
-    public string GetCodeNameType()
+    public string GetCodeName()
     {
-        return _codeNameType.ToString();
+        return _data.CodeName;
     }
     public void InitOccupier(GameObject parent, Action callBack = null)
     {

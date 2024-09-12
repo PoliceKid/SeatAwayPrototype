@@ -9,12 +9,55 @@ public class Gateway : MonoBehaviour
 {
     [SerializeField] Transform _unitContainer;
     [SerializeField] Cell _connectedCell;
-    private Queue<Unit> _unitQueue = new Queue<Unit>();
-
-    List<Vector3> _unitQueuePos = new List<Vector3>();
+    private Queue<Unit> _unitQueue;
+    public Queue<Unit> GetUnitQueue => _unitQueue;
+    private List<Vector3> _unitQueuePos;
     public Cell GetConnectedCell => _connectedCell;
+    //public Queue<Unit> GetUnitSortByCodename()
+    //{
+    //    Queue<Unit> sortedUnits = new Queue<Unit>();
+
+    //    foreach (Unit unit in _unitQueue)
+    //    {
+    //        sortedUnits.Enqueue(unit);
+    //    }
+
+    //    sortedUnits = new Queue<Unit>(sortedUnits.OrderBy(unit => unit.GetCodeName()));
+
+    //    return sortedUnits;
+    //}
+    public Queue<Unit> GetUnitSortByCodename()
+    {
+        Queue<Unit> sortedUnits = new Queue<Unit>();
+        Dictionary<string, Queue<Unit>> unitSortByCodeName = new Dictionary<string, Queue<Unit>>();
+
+        foreach (Unit unit in _unitQueue)
+        {
+            string codeName = unit.GetCodeName();
+
+            if (unitSortByCodeName.ContainsKey(codeName))
+            {
+                unitSortByCodeName[codeName].Enqueue(unit);
+            }
+            else
+            {
+                unitSortByCodeName[codeName] = new Queue<Unit>();
+                unitSortByCodeName[codeName].Enqueue(unit);
+            }
+        }
+        foreach (var unitTheSameCodeName in unitSortByCodeName)
+        {
+            foreach (var unit in unitTheSameCodeName.Value)
+            {
+                sortedUnits.Enqueue(unit);
+            }
+        }
+        return sortedUnits;
+    }
     public void Init()
     {
+        _unitQueue = new Queue<Unit>();
+        _unitQueuePos = new List<Vector3>();
         foreach (Transform child in _unitContainer)
         {
             Unit unit = child.GetComponent<Unit>();

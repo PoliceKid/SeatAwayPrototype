@@ -14,6 +14,7 @@ public class Unit : MonoBehaviour, IOccupier
     public System.Action OnUnitDestination = delegate { };
     private UnitData _data;
     private GameObject _parent;
+
     public void Init()
     {
         _data = new UnitData();
@@ -24,12 +25,12 @@ public class Unit : MonoBehaviour, IOccupier
     {
         return transform.forward.normalized;
     }
-
+    public CodeNameType GetCodeNameType() => _codeNameType;
     public string GetOccupierType()
     {
         return _data.CodeName;
     }
-    public string GetCodeNameType()
+    public string GetCodeName()
     {
         return _codeNameType.ToString();
     }
