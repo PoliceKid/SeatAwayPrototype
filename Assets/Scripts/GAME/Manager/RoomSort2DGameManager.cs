@@ -63,7 +63,8 @@ public class RoomSort2DGameManager : IDisposable
     }
     public Queue<Unit> GetAllUnitSortedQueue(List<Gateway> _gateWays)
     {
-        return _gateWays.SelectMany(gw => gw.GetUnitSortByCodename()).ToQueue();
+        int unitRange = GetAllUnitQueueCount(_gateWays);
+        return _gateWays.SelectMany(gw => gw.GetUnitSortByCodename(gw.GetUnitRange(unitRange))).ToQueue();
     }
     public int GetAllUnitQueueCount(List<Gateway> _gateWays)
     {
@@ -520,7 +521,7 @@ public class RoomSort2DGameManager : IDisposable
         Debug.Log("CountB: " + countB);
         List<Unit> ListUnitExcept = new List<Unit>();
         List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-        if (blockPlacedEmpties != null)
+        if (blockPlacedEmpties.Count >0)
         {
             foreach (var block in blockPlacedEmpties)
             {

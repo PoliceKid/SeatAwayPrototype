@@ -254,6 +254,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         }
     }
     public Dictionary<Vector3, Cell> GetNeighbors() => _data.Neighbors;
+    public Dictionary<Vector3, Cell> GetNeighborsExceptDir(Vector3 dir) => _data.Neighbors.Where(x => x.Key != dir).ToDictionary(x => x.Key, x => x.Value);
     #endregion
     #region PATHFINDING
     public void SetNextOnPath(Cell nextOnPath)

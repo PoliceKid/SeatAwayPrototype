@@ -26,7 +26,16 @@ public class Gateway : MonoBehaviour
 
     //    return sortedUnits;
     //}
-    public Queue<Unit> GetUnitSortByCodename()
+    public Queue<Unit> GetUnitRange(int range)
+    {
+        if (range > _unitQueue.Count)
+        {
+            range = _unitQueue.Count;
+        }
+
+        return new Queue<Unit>(_unitQueue.Take(range));
+    }
+    public Queue<Unit> GetUnitSortByCodename(Queue<Unit> unitQueue)
     {
         Queue<Unit> sortedUnits = new Queue<Unit>();
         Dictionary<string, Queue<Unit>> unitSortByCodeName = new Dictionary<string, Queue<Unit>>();
