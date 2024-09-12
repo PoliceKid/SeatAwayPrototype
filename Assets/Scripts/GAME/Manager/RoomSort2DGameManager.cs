@@ -61,10 +61,17 @@ public class RoomSort2DGameManager : IDisposable
     {
         return _blockPlacedOnCell.Keys.Where(x => !x.IsFullOccupier()).ToList();
     }
-    public Queue<Unit> GetAllUnitSortedQueue(List<Gateway> _gateWays)
+    public Queue<Unit> GetAllUnitQueue(List<Gateway> _gateWays)
     {
-        int unitRange = GetAllUnitQueueCount(_gateWays);
-        return _gateWays.SelectMany(gw => gw.GetUnitSortByCodename(gw.GetUnitRange(unitRange))).ToQueue();
+        return _gateWays.SelectMany(gw => gw.GetUnitQueue).ToQueue();
+    }
+    public Queue<Unit> GetAllUnitQueueRange(List<Gateway> _gateWays, int range)
+    {
+        return _gateWays.SelectMany(gw => gw.GetUnitRange(range)).ToQueue();
+    }
+    public Queue<Unit> GetAllUnitSortedQueue(List<Gateway> _gateWays, Queue<Unit> unitQueue)
+    {
+        return _gateWays.SelectMany(gw => gw.GetUnitSortByCodename(unitQueue)).ToQueue();
     }
     public int GetAllUnitQueueCount(List<Gateway> _gateWays)
     {
@@ -90,14 +97,14 @@ public class RoomSort2DGameManager : IDisposable
     private void InitLevelFromView(Transform roomParentCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints)
     {
         InitArchitectureFromView(architectureContainer);
-        InitUnitFromView(gateWayContainer);
+        InitGateWayFromView(gateWayContainer);
 
         List<Room> rooms = InitRoomFromView(roomParentCotainer);
         if(rooms != null)
         {
             RoomSpawnerManager roomSpawnerManager = new RoomSpawnerManager(rooms);
             InitRoomSpawner(roomSpawnerManager);
-            SpawnRooms(roomSpawnerManager, roomSpawnerPoints, roomParentCotainer, GetACount(), GetBCount(), GetAllUnitSortedQueue(_gateWays));
+            SpawnRooms(roomSpawnerManager, roomSpawnerPoints, roomParentCotainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
         }
     }
     public void InitRoomSpawner(RoomSpawnerManager roomSpawnerManager)
@@ -135,7 +142,6 @@ public class RoomSort2DGameManager : IDisposable
           
         }
         CheckUnitMoveToBlock(_gateWays);
-        CheckGameWin(_gateWays);
     }
 
     private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
@@ -151,11 +157,10 @@ public class RoomSort2DGameManager : IDisposable
                     Block block = GetBlockValiable(gateway.GetConnectedCell, unit.GetOccupierType(), out List<Cell> cellPath);
                     if (block == null) {
                         return false;
-
                     }
                     block.SetOccupier(unit);
                     List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
-                    unit.MoveTo(pathPositions);
+                    unit.MoveTo(pathPositions,onDestination: true);
                     gateway.DequeueUnit();
                     gatewayCanUpdateQueue = true;
                     if (_blockPlacedOnCell.ContainsKey(block))
@@ -188,8 +193,9 @@ public class RoomSort2DGameManager : IDisposable
         InitNeighborCellArchitecture(_architecture);
         
     }
-    private void InitUnitFromView(Transform gateWayContainer)
+    private void InitGateWayFromView(Transform gateWayContainer)
     {
+        _gateWays.Clear();
         foreach (Transform child in gateWayContainer)
         {
             Gateway gateWay = child.GetComponent<Gateway>();
@@ -197,8 +203,14 @@ public class RoomSort2DGameManager : IDisposable
             {
                 gateWay.Init();
                 _gateWays.Add(gateWay);
+                gateWay.OnCompleteWay += HandleGateWayComplete;
             }
         }
+    }
+
+    private void HandleGateWayComplete()
+    {
+        CheckGameWin(_gateWays);
     }
     #endregion
     #region UPDATE BEHAVIOUR
@@ -323,7 +335,7 @@ public class RoomSort2DGameManager : IDisposable
     private void CheckGameWin(List<Gateway> _gateWays)
     {
         if (_gateWays.Count == 0) return;
-        if(_gateWays.All(x => x.GetUnitQueue.Count ==0)){
+        if(_gateWays.All(x => x.IsCompleteWay())){
             Debug.Log("Game WINN");
             OnLevelComplete();
         }
@@ -438,11 +450,7 @@ public class RoomSort2DGameManager : IDisposable
             _roomSpawner[currentRoomSpawnerPoint] = null;
 
             if(_roomSpawner.All(x => x.Value == null)){
-
-                GetACount();
-                GetBCount();
-
-                SpawnRooms(_roomSpawnerManager,_levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomContainer,GetACount(),GetBCount(), GetAllUnitSortedQueue(_gateWays));
+                SpawnRooms(_roomSpawnerManager,_levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomContainer,GetACount(),GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
 
@@ -514,25 +522,13 @@ public class RoomSort2DGameManager : IDisposable
 
     #endregion
     #region ROOM SPAWNER
-    public void SpawnRooms(RoomSpawnerManager roomSpawnerManager, Transform[] spawnerPoints, Transform parent, int countA, int countB, Queue<Unit> UnitSortByCodename)
+    public void SpawnRooms(RoomSpawnerManager roomSpawnerManager, Transform[] spawnerPoints, Transform parent, int countA, int countB, Queue<Unit> UnitQueuePlacedEmpty)
     {
         _roomSpawner.Clear();
         Debug.Log("CountA: " + countA);
         Debug.Log("CountB: " + countB);
         List<Unit> ListUnitExcept = new List<Unit>();
-        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-        if (blockPlacedEmpties.Count >0)
-        {
-            foreach (var block in blockPlacedEmpties)
-            {
-                Unit unitAlreadyHasCodename = UnitSortByCodename.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
-                if (unitAlreadyHasCodename != null)
-                {
-                    ListUnitExcept.Add(unitAlreadyHasCodename);
-                }
-            }
-            UnitSortByCodename = new Queue<Unit>(UnitSortByCodename.Where(x => !ListUnitExcept.Contains(x)));
-        }
+  
         //Room1
         int count = Mathf.Min(countA, countB);
         if (count < 1)
@@ -590,7 +586,25 @@ public class RoomSort2DGameManager : IDisposable
             Debug.Log("Room3: " + roomPrefab3.GetBlockCount);
         }
         //
-        if(roomPrefab1 != null && roomPrefab2 != null && roomPrefab3 != null)
+        int allRoomBlockCount = roomPrefab1.GetBlockCount + roomPrefab2.GetBlockCount + roomPrefab3.GetBlockCount;
+        UnitQueuePlacedEmpty = GetAllUnitQueueRange(_gateWays,allRoomBlockCount);
+        UnitQueuePlacedEmpty = GetAllUnitSortedQueue(_gateWays, UnitQueuePlacedEmpty);
+
+        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
+        if (blockPlacedEmpties.Count > 0)
+        {
+            foreach (var block in blockPlacedEmpties)
+            {
+                Unit unitAlreadyHasCodename = UnitQueuePlacedEmpty.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
+                if (unitAlreadyHasCodename != null)
+                {
+                    ListUnitExcept.Add(unitAlreadyHasCodename);
+                }
+            }
+            UnitQueuePlacedEmpty = new Queue<Unit>(UnitQueuePlacedEmpty.Where(x => !ListUnitExcept.Contains(x)));
+        }
+
+        if (roomPrefab1 != null && roomPrefab2 != null && roomPrefab3 != null)
         {
             int index = 0;
             foreach (var roomConfig in roomConfigs)
@@ -608,9 +622,9 @@ public class RoomSort2DGameManager : IDisposable
                     foreach (var block in room.GetBlocks)
                     {
                         Unit unit = null;
-                        if (UnitSortByCodename.Count > 0)
+                        if (UnitQueuePlacedEmpty.Count > 0)
                         {
-                            unit = UnitSortByCodename.Dequeue();
+                            unit = UnitQueuePlacedEmpty.Dequeue();
                         }
                         block.Init(unit == null ? CodeNameType.Blue : unit.GetCodeNameType(), room.transform);
                     }

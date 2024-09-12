@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,25 +8,50 @@ using UnityEngine;
 
 public class Gateway : MonoBehaviour
 {
+    #region PROPERTIES
     [SerializeField] Transform _unitContainer;
     [SerializeField] Cell _connectedCell;
+    #endregion
+    #region CURRENT DATA
     private Queue<Unit> _unitQueue;
-    public Queue<Unit> GetUnitQueue => _unitQueue;
+    private Dictionary<Unit, bool> _unitCompleteWay;
     private List<Vector3> _unitQueuePos;
+
+    public Queue<Unit> GetUnitQueue => _unitQueue;
     public Cell GetConnectedCell => _connectedCell;
-    //public Queue<Unit> GetUnitSortByCodename()
-    //{
-    //    Queue<Unit> sortedUnits = new Queue<Unit>();
+    public System.Action OnCompleteWay = delegate { };
+    #endregion
+    public void Init()
+    {
+        _unitQueue = new Queue<Unit>();
+        _unitQueuePos = new List<Vector3>();
+        _unitCompleteWay = new Dictionary<Unit, bool>();
+        foreach (Transform child in _unitContainer)
+        {
+            Unit unit = child.GetComponent<Unit>();
+            if (unit != null)
+            {
+                unit.Init();
+                _unitQueue.Enqueue(unit);
+                _unitQueuePos.Add(unit.transform.position);
+                _unitCompleteWay.Add(unit, false);
+                unit.OnUnitDestination += HandleOnUnitDestination;
+            }
+        }
+    }
 
-    //    foreach (Unit unit in _unitQueue)
-    //    {
-    //        sortedUnits.Enqueue(unit);
-    //    }
+    private void HandleOnUnitDestination(Unit unit)
+    {
+        if (_unitCompleteWay.ContainsKey(unit))
+        {
+            _unitCompleteWay[unit] = true;
+        }
+        if (IsCompleteWay())
+        {
+            OnCompleteWay?.Invoke();
+        }
+    }
 
-    //    sortedUnits = new Queue<Unit>(sortedUnits.OrderBy(unit => unit.GetCodeName()));
-
-    //    return sortedUnits;
-    //}
     public Queue<Unit> GetUnitRange(int range)
     {
         if (range > _unitQueue.Count)
@@ -40,7 +66,7 @@ public class Gateway : MonoBehaviour
         Queue<Unit> sortedUnits = new Queue<Unit>();
         Dictionary<string, Queue<Unit>> unitSortByCodeName = new Dictionary<string, Queue<Unit>>();
 
-        foreach (Unit unit in _unitQueue)
+        foreach (Unit unit in unitQueue)
         {
             string codeName = unit.GetCodeName();
 
@@ -62,23 +88,6 @@ public class Gateway : MonoBehaviour
             }
         }
         return sortedUnits;
-    }
-    public void Init()
-    {
-        _unitQueue = new Queue<Unit>();
-        _unitQueuePos = new List<Vector3>();
-        foreach (Transform child in _unitContainer)
-        {
-            Unit unit = child.GetComponent<Unit>();
-            if (unit != null)
-            {
-                unit.Init();
-                _unitQueue.Enqueue(unit);
-                _unitQueuePos.Add(unit.transform.position);
-            }
-        }
-
-        //StartCoroutine(MoveUnitsInQueue());
     }
     public Unit DequeueUnit()
     {
@@ -107,5 +116,8 @@ public class Gateway : MonoBehaviour
             if (!canContinue) return;
         }
     }
-
+    public bool IsCompleteWay()
+    {
+        return _unitCompleteWay.All(x => x.Value == true);
+    }
 }
