@@ -23,13 +23,18 @@ public class RoomSpawnerManager
     public Room GetRoomConfig(int count)
     {
         List<Room> roomWithBlockCount = GetRoomWithMaxBlockCount(count);
-        if (roomWithBlockCount != null)
+        if (roomWithBlockCount.Count >0)
         {
             Room room = GetRoomByWeight(roomWithBlockCount);
             Debug.Log(room);
             return room;
         }
-        return null;
+        return GetRoomWithMinBlockCount();
+    }
+    public void DecreaseRoomConfigWeight(Room roomConfig, int weight)
+    {
+        if (roomConfig == null) return;
+        roomConfig.UpdateWeight(weight);
     }
     public void AddRoomConfig(List<Room> rooms)
     {
@@ -42,6 +47,11 @@ public class RoomSpawnerManager
     public List<Room> GetRoomWithMaxBlockCount(int blockCount)
     {
         return _roomSpawners.Where(x => x.GetBlockCount <= blockCount).ToList();
+    }
+    public Room GetRoomWithMinBlockCount()
+    {
+        var _roomSpawnersSortBlockCount = _roomSpawners.OrderBy(x => x.GetBlockCount);
+        return _roomSpawnersSortBlockCount.First();
     }
     public float GetWeightFromBlockCount(int blockCount)
     {

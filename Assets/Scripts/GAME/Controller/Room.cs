@@ -76,13 +76,51 @@ public class Room : MonoBehaviour
         _sortingGroup.sortingOrder = onMove ? 10 : 2;
     }
 
-    internal void Move(Vector3 worldPosition)
+    internal void Move(Vector3 worldPosition, Dictionary<Block, Cell> _blockRaycastedToCellDict)
     {
         transform.position = worldPosition;
+        foreach (var valueKey in _blockRaycastedToCellDict)
+        {
+            _data.SetRaycast(valueKey.Key, valueKey.Value);
+        }
     }
     public void ResetPosition()
     {
         transform.localPosition = _data.InitPoint;
+        //if (GetPlaceableState != PlaceableState.Placed || _data.BlocksRaycastCell.Any(x => x.Value == null || x.Value.IsOccupier()))
+        //{
+        //    transform.localPosition = _data.InitPoint;
+        //}
+        //else
+        //{
+        //    foreach (var blockCellValuekey in _data.BlocksRaycastCell)
+        //    {
+        //        Block block = blockCellValuekey.Key;
+        //        Cell cell = blockCellValuekey.Value;
+        //        if (block == null || cell == null) continue;
+
+        //        block.transform.parent = cell.transform;
+        //        block.transform.localPosition = new Vector3(0, 0, 0);
+        //        cell.SetOccupier(block);
+        //    }
+            
+        //}
+    }
+    public void RecoverRoom()
+    {
+        foreach (var block in _data.Blocks)
+        {
+            if (block != null)
+            {
+                //block.OnPlaceable(true);
+                block.transform.parent = transform;
+                block.ResetPosition();
+            }
+        }
+    }
+    public void SetCheckPointPosition(Vector3 point)
+    {
+        _data.InitPoint = point;
     }
     public void AddBlock(Block block)
     {
@@ -115,23 +153,42 @@ public class Room : MonoBehaviour
     #region PLACEABLE STATE
     public PlaceableState GetPlaceableState => _state;
 
-
+    
 
     public void ChangePlaceableState(PlaceableState newState)
     {
         _state = newState;
+    }
+    public void UpdateWeight(int weight)
+    {
+        _weight += weight;
     }
     #endregion
     [SerializeField]
     public class Data
     {
         private bool _isCompelete;
+        private bool _isPlaced;
         private List<Block> _blocks = new List<Block>();
+        private Dictionary<Block, Cell> _blocksRaycastCell = new Dictionary<Block, Cell>();
         private Vector3 _initPoint;
         public Vector3 InitPoint { get => _initPoint; set => _initPoint = value; }
         public List<Block> Blocks { get => _blocks; set => _blocks = value; }
         public bool IsCompelete { get => _isCompelete; set => _isCompelete = value; }
+        public Dictionary<Block, Cell> BlocksRaycastCell => _blocksRaycastCell;
 
+        public void SetRaycast(Block block , Cell cell)
+        {
+            if (cell == null) return;
+            if (!_blocksRaycastCell.ContainsKey(block))
+            {
+                _blocksRaycastCell.Add(block, cell);
+            }
+            else
+            {
+                _blocksRaycastCell[block] = cell;
+            }
+        }
         public Data()
         {
             _blocks = new List<Block>();
