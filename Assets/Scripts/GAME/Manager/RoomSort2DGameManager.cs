@@ -199,7 +199,7 @@ public class RoomSort2DGameManager : IDisposable
 
                 if (unit != null)
                 {
-                    Block block = GetBlockValiable(gateway.GetConnectedCell, unit.GetOccupierType(), out List<Cell> cellPath);
+                    Block block = GetBlockValiable(gateway.GetConnectedCell, gateway.GetDirection(), unit.GetOccupierType(), out List<Cell> cellPath);
                     if (block == null) {
                         return false;
                     }
@@ -571,11 +571,12 @@ public class RoomSort2DGameManager : IDisposable
             }
         }
     }
-    public Block GetBlockValiable(Cell startCell,string codeName, out List<Cell> cellPath)
+    public Block GetBlockValiable(Cell startCell,Vector3 direction,string codeName, out List<Cell> cellPath)
     {
         cellPath = null;
         if (startCell.IsOccupier())
         {
+          
             if(startCell.GetLastOccupier().GetCodeName() != codeName)
             {
                 return null;
@@ -584,6 +585,7 @@ public class RoomSort2DGameManager : IDisposable
             {
                 return null;
             }
+            if (direction == startCell.GetLastOccupier().GetDirection()) return null;
         }
         _blockPlacedOnCell = _blockPlacedOnCell.OrderBy(x => Vector3.Distance(x.Value.transform.localPosition, startCell.transform.localPosition)).ToDictionary(x => x.Key, y => y.Value);
         foreach (var blockOnCell in _blockPlacedOnCell)

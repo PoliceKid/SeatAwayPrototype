@@ -11,6 +11,7 @@ public class Gateway : MonoBehaviour
     #region PROPERTIES
     [SerializeField] Transform _unitContainer;
     [SerializeField] Cell _connectedCell;
+    [SerializeField] GameObject _directionGO;
     #endregion
     #region CURRENT DATA
     private Queue<Unit> _unitQueue;
@@ -119,5 +120,9 @@ public class Gateway : MonoBehaviour
     public bool IsCompleteWay()
     {
         return _unitCompleteWay.All(x => x.Value == true);
+    }
+    public Vector3 GetDirection()
+    {
+        return _directionGO.transform.forward.normalized;
     }
 }

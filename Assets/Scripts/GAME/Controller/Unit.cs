@@ -57,12 +57,17 @@ public class Unit : MonoBehaviour, IOccupier
     {
         
     }
+    private Coroutine _moveCoroutine;
     public void MoveTo(List<Vector3> cellPositions, bool onDestination = false)
     {
         if(cellPositions == null) return;
         if (cellPositions.Count > 0)
         {
-            StartCoroutine(StartMove(cellPositions, onDestination));
+            if (_moveCoroutine != null)
+            {
+                StopCoroutine(_moveCoroutine);
+            }
+            _moveCoroutine =StartCoroutine(StartMove(cellPositions, onDestination));
         }
     }
     IEnumerator StartMove(List<Vector3> cellPositions, bool onDestination = false)
