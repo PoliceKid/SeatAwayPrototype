@@ -52,47 +52,14 @@ public class Gateway : MonoBehaviour
             OnCompleteWay?.Invoke();
         }
     }
-
-    public Queue<Unit> GetUnitRange(int range)
-    {
-        if (range > _unitQueue.Count)
-        {
-            range = _unitQueue.Count;
-        }
-
-        return new Queue<Unit>(_unitQueue.Take(range));
-    }
-    public Queue<Unit> GetUnitSortByCodename(Queue<Unit> unitQueue)
-    {
-        Queue<Unit> sortedUnits = new Queue<Unit>();
-        Dictionary<string, Queue<Unit>> unitSortByCodeName = new Dictionary<string, Queue<Unit>>();
-
-        foreach (Unit unit in unitQueue)
-        {
-            string codeName = unit.GetCodeName();
-
-            if (unitSortByCodeName.ContainsKey(codeName))
-            {
-                unitSortByCodeName[codeName].Enqueue(unit);
-            }
-            else
-            {
-                unitSortByCodeName[codeName] = new Queue<Unit>();
-                unitSortByCodeName[codeName].Enqueue(unit);
-            }
-        }
-        foreach (var unitTheSameCodeName in unitSortByCodeName)
-        {
-            foreach (var unit in unitTheSameCodeName.Value)
-            {
-                sortedUnits.Enqueue(unit);
-            }
-        }
-        return sortedUnits;
-    }
     public Unit DequeueUnit()
     {
         Unit unit = _unitQueue.Dequeue();       
+        return unit;
+    }
+    public Unit PeekUnit()
+    {
+        Unit unit = _unitQueue.Peek();
         return unit;
     }
     public void MoveUnitsInQueue()
