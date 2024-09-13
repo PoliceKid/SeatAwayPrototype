@@ -30,11 +30,14 @@ public class PathFindingService
             {
                 Vector3 dir = neighborValueKey.Key;
                 Cell neighbor = neighborValueKey.Value;
-                if (neighbor.IsOccupier() && neighbor != destinationCell)
-                {                   
-                    continue;            
+                if (neighbor.IsOccupier())
+                {
+                    if (neighbor != destinationCell)
+                    {
+                        continue;
+                    }
+                    if (neighbor == destinationCell && dir == neighbor.GetLastOccupier().GetDirection()) continue;
                 }
-                if(neighbor == destinationCell && dir == Vector3.forward) continue;
                 float newCost = current.cost + Vector3.Distance(current.cell.transform.localPosition, neighbor.transform.localPosition);
                 if (!cellNodes.TryGetValue(neighbor, out CellNode neighborNode) || newCost < neighborNode.cost)
                 {

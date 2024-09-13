@@ -120,6 +120,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 
                 break;
             default:
+                _renderer.material.color = Color.blue;
                 break;
         }
     }
@@ -230,11 +231,6 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         _parent = null;
     }
-
-   
-
-
-
     #endregion
 
 

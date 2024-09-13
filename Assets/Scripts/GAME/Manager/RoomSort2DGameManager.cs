@@ -22,7 +22,7 @@ public class RoomSort2DGameManager : IDisposable
     private List<Room> _rooms = new List<Room>();
     private Architecture _architecture;
     private Room _currentRoomInteract;
-    private Dictionary<Block, Cell> _blockRaycastedToCellDict = new Dictionary<Block, Cell>();
+    private Dictionary<Block, Cell> _blockRaycastedToCellDict;
     private Dictionary<Block,Cell> _blockPlacedOnCell = new Dictionary<Block, Cell> ();
     private Dictionary<Vector3, Room> _roomSpawner = new Dictionary<Vector3, Room>();
     private List<Gateway> _gateWays = new List<Gateway>();
@@ -97,25 +97,26 @@ public class RoomSort2DGameManager : IDisposable
 
         return cellPlacableCount;
     }
-    private void InitLevelFromView(Transform roomParentCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints)
+    private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints)
     {
         InitArchitectureFromView(architectureContainer);
         InitGateWayFromView(gateWayContainer);
-
-        List<Room> rooms = InitRoomFromView(roomParentCotainer);
+        List<Room> rooms = InitRoomConfigFromView(roomConfigCotainer);
         if(rooms != null)
         {
             RoomSpawnerManager roomSpawnerManager = new RoomSpawnerManager(rooms);
             InitRoomSpawner(roomSpawnerManager);
-            SpawnRooms(roomSpawnerManager, roomSpawnerPoints, roomParentCotainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
+            SpawnRooms(roomSpawnerManager, roomSpawnerPoints, roomConfigCotainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
         }
+        InitRoomStaticFromView(roomStaticCotainer);
+
     }
     public void InitRoomSpawner(RoomSpawnerManager roomSpawnerManager)
     {
         _roomSpawnerManager = roomSpawnerManager;
         injector.Inject(_roomSpawnerManager);
     }
-    private List<Room> InitRoomFromView(Transform roomContainer)
+    private List<Room> InitRoomConfigFromView(Transform roomContainer)
     {
         List<Room> roomsConfig = new List<Room>();
         foreach (Transform child in roomContainer)
@@ -131,7 +132,48 @@ public class RoomSort2DGameManager : IDisposable
         }
         return roomsConfig;
     }
+    private List<Room> InitRoomStaticFromView(Transform roomStaticContainer)
+    {
+        List<Room> roomsStatic = new List<Room>();
+        foreach (Transform child in roomStaticContainer)
+        {
+            Room room = child.GetComponent<Room>();
+            if (room != null)
+            {
+                room.Init();
+                room.gameObject.SetActive(true);
+                roomsStatic.Add(room);
+                room.OnCompleteRoom += HandleCompleteRoom;
+            }
+            List<Block> blocks = room.GetBlocks;
 
+            if(blocks != null)
+            {
+                InitBlockRaycastToCell(blocks);
+                foreach (var block in blocks)
+                {
+                    block.Init(CodeNameType.Blue,room.transform);
+                    Ray blockRay = new Ray(block.transform.position +Vector3.up*5, Vector3.down);
+                    Cell cellSlot = null;
+                    if (Physics.RaycastNonAlloc(blockRay, _raycastHits, 10f, _gameView.GetCellLayerMask) > 0)
+                    {
+                        cellSlot = _raycastHits[0].collider.GetComponentInParent<Cell>();
+                    }
+                    _isValidPlace = cellSlot != null;
+                
+                    SetBlockRaycastToCell(block, cellSlot);
+                  
+                }
+                if (CheckBlockRaycastPlaceable(_blockRaycastedToCellDict))
+                {
+                    PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
+                    room.ChangePlaceableState(PlaceableState.Freeze);
+                }
+            }
+           
+        }
+        return roomsStatic;
+    }
     private void HandleCompleteRoom(List<Block> blocks)
     {
         foreach (var block in blocks)
@@ -224,6 +266,7 @@ public class RoomSort2DGameManager : IDisposable
     }
     private void InitBlockRaycastToCell(List<Block> blocks)
     {
+        _blockRaycastedToCellDict = new Dictionary<Block, Cell>();
         if (blocks == null) return;
         foreach (var item in blocks)
         {
@@ -257,8 +300,10 @@ public class RoomSort2DGameManager : IDisposable
                         //Offset
                         Vector3 worldPosition = _gameView.GetMainCam.ScreenToWorldPoint(mousePosition);
                         clickOffset = worldPosition - room.transform.position;
-                        
+
+                        if (room.GetPlaceableState == PlaceableState.Freeze) return;
                         _currentRoomInteract = room;
+                        
                         blocks = GetlistBlock(_currentRoomInteract);
                         if (blocks == null) return;
                         //If room is placeable state
@@ -361,6 +406,7 @@ public class RoomSort2DGameManager : IDisposable
             if (CheckBlockRaycastPlaceable(_blockRaycastedToCellDict))
             {
                 PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
+                CheckSpawnRooms(_currentRoomInteract);
                 _currentRoomInteract.ChangePlaceableState(PlaceableState.Placed);
                 
             }
@@ -375,7 +421,6 @@ public class RoomSort2DGameManager : IDisposable
             ClearCellRaycast(_architecture);
             clickOffset = Vector3.zero;
             _currentRoomInteract = null;
-            _blockRaycastedToCellDict.Clear();
             _roomRaycastCheck.ClearRaycast();
         }
     }
@@ -487,22 +532,27 @@ public class RoomSort2DGameManager : IDisposable
             {
                 _blockPlacedOnCell[block] = cell;
             }
-            
-        }   
+
+        }
         CheckUnitMoveToBlock(_gateWays);
         SetPlaceableCellCondition(_blockCheckRaycastDict.Values.ToList());
 
+    }
+
+    private void CheckSpawnRooms(Room targetRoom)
+    {
         Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
         if (currentRoomSpawnerPoint != null)
         {
             _roomSpawner[currentRoomSpawnerPoint] = null;
 
-            if(_roomSpawner.All(x => x.Value == null)){
-                SpawnRooms(_roomSpawnerManager,_levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomContainer,GetACount(),GetBCount(), GetAllUnitQueue(_gateWays));
+            if (_roomSpawner.All(x => x.Value == null))
+            {
+                SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
+    }
 
-    }         
     private void ClearRoomOuccupier(Room targetRoom, Architecture _architecture)
     {
         List<Block> blocks = GetlistBlock(targetRoom);
@@ -801,7 +851,7 @@ public class RoomSort2DGameManager : IDisposable
             if (levelContainer != null)
             {
                 _levelContainer = levelContainer;
-                InitLevelFromView(levelContainer.GetRoomContainer, levelContainer.GetArchitectureContainer,levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints);
+                InitLevelFromView(levelContainer.GetRoomConfigContainer,levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer,levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints);
             }
         }
     }
@@ -922,7 +972,8 @@ public enum BlockType
 public enum PlaceableState
 {
     Placed,
-    Free
+    Free,
+    Freeze
 }
 public enum CodeNameType
 {

@@ -5,12 +5,16 @@ using System.Linq;
 public class LevelContainer : MonoBehaviour
 {
     [SerializeField] Transform _architectureContainer;
-    [SerializeField] Transform _roomContainer;
+    [SerializeField] Transform _roomConfigContainer;
+    [SerializeField] Transform _roomStaticContainer;
     [SerializeField] Transform _gateWayContainer;
     [SerializeField] Transform _roomSpawnerPointContainer;
+
     public Transform GetArchitectureContainer => _architectureContainer;
-    public Transform GetRoomContainer => _roomContainer;
+    public Transform GetRoomConfigContainer => _roomConfigContainer;
+    public Transform GetRoomStaticContainer => _roomStaticContainer;
     public Transform GetGateWayContainer=> _gateWayContainer;
+
     public Transform[] GetRoomSpawnerPoints
     {
         get
