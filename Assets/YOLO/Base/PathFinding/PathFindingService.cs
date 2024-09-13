@@ -10,16 +10,17 @@ public class PathFindingService
     {
         
         Dictionary<Cell, CellNode> cellNodes = new Dictionary<Cell, CellNode>();
-        SortedSet<CellNode> openList = new SortedSet<CellNode>(new CellNodeComparer());
+        //SortedSet<CellNode> openList = new SortedSet<CellNode>(new CellNodeComparer());
+        Queue<CellNode> openList = new Queue<CellNode>();
 
         CellNode startNode = new CellNode(startCell, 0, Vector3.Distance(startCell.transform.localPosition, destinationCell.transform.localPosition));
         cellNodes.Add(startCell, startNode);
-        openList.Add(startNode);
+        openList.Enqueue(startNode);
 
         while (openList.Count > 0)
         {           
-            CellNode current = openList.Min;
-            openList.Remove(current);
+            CellNode current = openList.Dequeue();
+            //openList.Remove(current);
 
             if (current.cell == destinationCell)
             {
@@ -47,7 +48,7 @@ public class PathFindingService
 
                     if (!openList.Contains(neighborNode))
                     {
-                        openList.Add(neighborNode);
+                        openList.Enqueue(neighborNode);
                     }
                 }
             }
