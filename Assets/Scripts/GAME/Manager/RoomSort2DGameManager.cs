@@ -20,6 +20,7 @@ public class RoomSort2DGameManager : IDisposable
         _gameView = gameView;
     }
     private List<Room> _rooms;
+    private List<Room> _roomsStatic;
     private Room _currentRoomInteract;
     private Architecture _architecture;
     private Dictionary<Block, Cell> _blockRaycastedToCellDict;
@@ -109,6 +110,7 @@ public class RoomSort2DGameManager : IDisposable
     private List<Room> InitRoomStaticFromView(Transform roomStaticContainer)
     {
         List<Room> roomsStatic = new List<Room>();
+        _roomsStatic = new List<Room>();
         foreach (Transform child in roomStaticContainer)
         {
             if (child.gameObject.activeSelf == false)
@@ -121,7 +123,7 @@ public class RoomSort2DGameManager : IDisposable
                 room.Init();
                 room.gameObject.SetActive(true);
                 roomsStatic.Add(room);
-                _rooms.Add(room);
+                _roomsStatic.Add(room);
                 room.OnCompleteRoom += HandleCompleteRoom;
             }
             List<Block> blocks = room.GetBlocks;
@@ -284,6 +286,7 @@ public class RoomSort2DGameManager : IDisposable
                         clickOffset = worldPosition - room.transform.position;
 
                         if (room.GetPlaceableState == PlaceableState.Freeze) return;
+                        if (_roomsStatic.Contains(room)) return;
                         _currentRoomInteract = room;
 
                         blocks = GetlistBlock(_currentRoomInteract);
