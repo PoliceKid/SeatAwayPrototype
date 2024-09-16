@@ -9,7 +9,6 @@ public class RoomSpawnerManager
 {
     [Inject] private RandomSelectedService _randomSelectedService;
     private  List<Room> _roomSpawners;
-   
     public RoomSpawnerManager(List<Room> rooms)
     {
         _roomSpawners = new List<Room>();
@@ -18,18 +17,27 @@ public class RoomSpawnerManager
         {
             AddRoomConfig(rooms);
         }
-
     }
     public Room GetRoomConfig(int count)
     {
-        List<Room> roomWithBlockCount = GetRoomWithMaxBlockCount(count);
-        if (roomWithBlockCount.Count >0)
+        Debug.Log("Count: " + count);
+        List<Room> roomWithBlockCount = GetRoomsWithMaxBlockCount(count);
+        if (roomWithBlockCount.Count <=0)
         {
-            Room room = GetRoomByWeight(roomWithBlockCount);
-            Debug.Log(room);
-            return room;
+            Room roomWithMidBlockCount = GetRoomWithMinBlockCount();
+            if (roomWithMidBlockCount != null)
+            {
+                int minBlockCount  = roomWithMidBlockCount.GetBlockCount;
+                roomWithBlockCount = GetRoomsWithMaxBlockCount(minBlockCount);
+            }
         }
-        return GetRoomWithMinBlockCount();
+        Room room = GetRoomByWeight(roomWithBlockCount);
+        Debug.Log(room);
+        if (room == null)
+        {
+            room = GetRoomWithMinBlockCount();
+        }
+        return room;
     }
     public void DecreaseRoomConfigWeight(Room roomConfig, int weight)
     {
@@ -44,14 +52,19 @@ public class RoomSpawnerManager
             _roomSpawners.Add(room);
         }
     }
-    public List<Room> GetRoomWithMaxBlockCount(int blockCount)
+    public List<Room> GetRoomsWithMaxBlockCount(int blockCount)
     {
-        return _roomSpawners.Where(x => x.GetBlockCount <= blockCount).ToList();
+        return _roomSpawners.Where(x => x.GetBlockCount <= blockCount && x.GetWeight >0).ToList();
     }
     public Room GetRoomWithMinBlockCount()
     {
-        var _roomSpawnersSortBlockCount = _roomSpawners.OrderBy(x => x.GetBlockCount);
-        return _roomSpawnersSortBlockCount.First();
+        var _roomSpawnersSortBlockCount = _roomSpawners.Where(x => x.GetWeight > 0);
+         _roomSpawnersSortBlockCount = _roomSpawnersSortBlockCount.OrderBy(x => x.GetBlockCount);
+        if(_roomSpawnersSortBlockCount != null)
+        {
+            return _roomSpawnersSortBlockCount.First();
+        }
+        return null;
     }
     public float GetWeightFromBlockCount(int blockCount)
     {

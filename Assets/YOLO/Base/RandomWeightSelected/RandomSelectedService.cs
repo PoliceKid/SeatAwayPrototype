@@ -15,7 +15,7 @@ public class RandomSelectedService
     {
         if (itemsWithWeights == null || itemsWithWeights.Count == 0)
         {
-            throw new ArgumentException("The itemsWithWeights null or empty.");
+            return default(T); // T
         }
 
         double totalWeight = 0;
