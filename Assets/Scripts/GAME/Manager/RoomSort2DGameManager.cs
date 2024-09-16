@@ -60,15 +60,15 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
-    private void CheckGameWin(List<Gateway> _gateWays)
+    private bool CheckGameWin(List<Gateway> _gateWays)
     {
-        if (_gateWays.Count == 0) return;
+        if (_gateWays.Count == 0) return false;
         if (_gateWays.All(x => x.IsCompleteWay()))
         {
-            Debug.Log("Game WINN");
-            OnLevelComplete();
+            return true;
+           
         }
-
+        return false;
     }
 
     private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints)
@@ -231,7 +231,11 @@ public class RoomSort2DGameManager : IDisposable
     }
     private void HandleGateWayComplete()
     {
-        CheckGameWin(_gateWays);
+        if (CheckGameWin(_gateWays))
+        {
+            Debug.Log("Game WINN");
+            OnLevelComplete();
+        }
     }
     #endregion
     #region UPDATE BEHAVIOUR
@@ -450,6 +454,7 @@ public class RoomSort2DGameManager : IDisposable
     }
     private void CheckSpawnRooms(Room targetRoom)
     {
+      
         Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
         if (currentRoomSpawnerPoint != null)
         {
@@ -457,6 +462,10 @@ public class RoomSort2DGameManager : IDisposable
 
             if (_roomSpawner.All(x => x.Value == null))
             {
+                if (CheckGameWin(_gateWays))
+                {
+                    return;
+                }
                 SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
