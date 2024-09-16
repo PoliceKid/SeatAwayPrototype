@@ -111,7 +111,7 @@ public class RoomSort2DGameManager : IDisposable
         List<Room> roomsStatic = new List<Room>();
         foreach (Transform child in roomStaticContainer)
         {
-            if(child.gameObject.activeSelf == false)
+            if (child.gameObject.activeSelf == false)
             {
                 continue;
             }
@@ -603,26 +603,27 @@ public class RoomSort2DGameManager : IDisposable
             Debug.Log("Room3: " + roomPrefab3.GetBlockCount);
         }
         //
-        int allRoomBlockCount = roomPrefab1.GetBlockCount + roomPrefab2.GetBlockCount + roomPrefab3.GetBlockCount;
-        UnitQueueValiable = GetAllUnitQueueRange(UnitQueueValiable, allRoomBlockCount);
-        UnitQueueValiable = GetAllUnitSortedQueue(UnitQueueValiable);
-
-        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-        if (blockPlacedEmpties.Count > 0)
-        {
-            foreach (var block in blockPlacedEmpties)
-            {
-                Unit unitAlreadyHasCodename = UnitQueueValiable.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
-                if (unitAlreadyHasCodename != null)
-                {
-                    ListUnitExcept.Add(unitAlreadyHasCodename);
-                }
-            }
-            UnitQueueValiable = new Queue<Unit>(UnitQueueValiable.Where(x => !ListUnitExcept.Contains(x)));
-        }
-
         if (roomPrefab1 != null && roomPrefab2 != null && roomPrefab3 != null)
         {
+            int allRoomBlockCount = roomPrefab1.GetBlockCount + roomPrefab2.GetBlockCount + roomPrefab3.GetBlockCount;
+            UnitQueueValiable = GetAllUnitQueueRange(UnitQueueValiable, allRoomBlockCount);
+            UnitQueueValiable = GetAllUnitSortedQueue(UnitQueueValiable);
+
+            List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
+            if (blockPlacedEmpties.Count > 0)
+            {
+                foreach (var block in blockPlacedEmpties)
+                {
+                    Unit unitAlreadyHasCodename = UnitQueueValiable.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
+                    if (unitAlreadyHasCodename != null)
+                    {
+                        ListUnitExcept.Add(unitAlreadyHasCodename);
+                    }
+                }
+                UnitQueueValiable = new Queue<Unit>(UnitQueueValiable.Where(x => !ListUnitExcept.Contains(x)));
+            }
+
+
             int index = 0;
             foreach (var roomConfig in roomConfigs)
             {

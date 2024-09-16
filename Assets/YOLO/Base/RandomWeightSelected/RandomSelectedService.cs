@@ -34,6 +34,6 @@ public class RandomSelectedService
             }
             randomValue -= item.Value;
         }
-        throw new InvalidOperationException(" error random item.");
+        return default(T); // This line should never be reached
     }
 }
