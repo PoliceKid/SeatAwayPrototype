@@ -27,6 +27,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     private Color initColor;
     public bool IsOnUnitDestination = false;
     public System.Action<Block> OnUnitDestionation = delegate { };
+    public System.Action<Block> OnUnitStartOccpier = delegate { };
     private GameObject _parent;
     #endregion
     public void Init(CodeNameType codeNameType,Transform parent)
@@ -166,6 +167,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         if (!_data.Occupiers.Contains(occupier))
         {
             _data.Occupiers.Add(occupier);
+            OnUnitStartOccpier?.Invoke(this);
             occupier.InitOccupier(this.gameObject,() =>
             {
                 OnUnitDestionation.Invoke(this);

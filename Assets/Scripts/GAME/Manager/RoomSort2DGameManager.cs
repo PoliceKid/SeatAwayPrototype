@@ -383,9 +383,10 @@ public class RoomSort2DGameManager : IDisposable
 
             if (CheckBlockRaycastPlaceable(_blockRaycastedToCellDict))
             {
+                _currentRoomInteract.ChangePlaceableState(PlaceableState.Placed);
+
                 PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
                 CheckSpawnRooms(_currentRoomInteract);
-                _currentRoomInteract.ChangePlaceableState(PlaceableState.Placed);
             }
             else
             {

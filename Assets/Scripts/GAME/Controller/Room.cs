@@ -15,6 +15,7 @@ public class Room : MonoBehaviour
     public int GetBlockCount => _BlockContainer.childCount;
     private Dictionary<Vector2Int, Block> _blockPositions;
     private Dictionary<Block, bool> _blockOnDestination;
+    private Dictionary<Block, bool> _blockOnDestinationsBlockRaycast;
     private Data _data;
     private PlaceableState _state;
     public System.Action<List<Block>> OnCompleteRoom = delegate { };
@@ -24,6 +25,7 @@ public class Room : MonoBehaviour
         _data = new Data();
         _blockPositions = new Dictionary<Vector2Int, Block>();
         _blockOnDestination = new Dictionary<Block, bool>();
+        _blockOnDestinationsBlockRaycast = new Dictionary<Block, bool>();
         foreach (Transform child in _BlockContainer)
         {
             Block block = child.GetComponent<Block>();
@@ -33,11 +35,18 @@ public class Room : MonoBehaviour
                 AddBlock(block);
                 InitBlockDestionation(block);
                 block.OnUnitDestionation += HandleBlockUnitDestionation;
+                block.OnUnitStartOccpier += HandleBlockStartOccupier;
             }
         }
         _data.InitPoint = transform.localPosition;
         _state = PlaceableState.Free;
         
+    }
+
+    private void HandleBlockStartOccupier(Block block)
+    {
+        _blockOnDestinationsBlockRaycast.Add(block, false);
+        ChangePlaceableState(PlaceableState.Freeze);
     }
 
     private void InitBlockDestionation(Block block)
@@ -49,6 +58,7 @@ public class Room : MonoBehaviour
     }
     private void HandleBlockUnitDestionation(Block block)
     {
+        //Check Complete
         if (!_blockOnDestination.ContainsKey(block)) return;
 
         _blockOnDestination[block] = true;
@@ -64,6 +74,15 @@ public class Room : MonoBehaviour
             }
             SetComplete(true);
             OnCompleteRoom?.Invoke(GetBlocks);
+        }
+        //Check can raycast
+        if (!_blockOnDestinationsBlockRaycast.ContainsKey(block)) return;
+        _blockOnDestinationsBlockRaycast[block] = true;
+
+        if (_blockOnDestinationsBlockRaycast.Values.All(x => x == true))
+        {
+            ChangePlaceableState(PlaceableState.Placed);
+            _blockOnDestinationsBlockRaycast.Clear();
         }
     }
 
