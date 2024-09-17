@@ -74,17 +74,18 @@ public class RoomSort2DGameManager : IDisposable
         if (result)
         {
             _lauchCount--;
-            if (CheckEndGame())
+            if (_lauchCount <=0)
             {
-                GameWin();
-
+                if (CheckEndGame())
+                {
+                    GameWin();
+                }
+                else
+                {
+                    Debug.Log("Game Over");
+                    _gameView.GetGameOverPopup.SetActive(true);
+                }
             }
-            else
-            {
-                Debug.Log("Game Over");
-                _gameView.GetGameOverPopup.SetActive(true);
-            }
-            
             return _lauchCount;
 
         }
@@ -96,7 +97,6 @@ public class RoomSort2DGameManager : IDisposable
 
     private bool CheckEndGame()
     {
-        if (_lauchCount > 0) return false;
         int count = GetAllUnitQueueCount(_gateWays);
         if (count <= 0) return true;
         if(count <= _levelContainer.GetMinUnitCheckGameOver)
@@ -592,10 +592,11 @@ public class RoomSort2DGameManager : IDisposable
 
             if (_roomSpawner.All(x => x.Value == null))
             {
-                if (CheckGameWin(_gateWays) || CheckEndGame())
+                if (CheckGameWin(_gateWays))
                 {
                     return;
                 }
+                if (_lauchCount <= 0 && CheckEndGame()) return;
                 SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
