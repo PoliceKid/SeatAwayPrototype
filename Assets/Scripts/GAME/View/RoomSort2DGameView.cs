@@ -10,13 +10,21 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] private Transform _levelContainer;
     [SerializeField] private Button _lauchBtn;
     [SerializeField] private TextMeshProUGUI _lauchCountText;
+    [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
+
     public Camera GetMainCam => _mainCam;
     public LayerMask GetBlockLayerMask => _blockLayerMask;
     public LayerMask GetCellLayerMask => _cellLayerMask;
     public Transform GetLevelContainer => _levelContainer;
     public Button GetLauchBtn => _lauchBtn;
+    public GameObject GetGameOverPopup => _gameOverPopup;
+
+    public void Init()
+    {
+        _gameOverPopup.gameObject.SetActive(false);
+    }
 
     public LevelContainer SpawnLevel(GameObject levelPrefab, Vector3 point, Quaternion quaternion)
     {
@@ -51,7 +59,7 @@ public class RoomSort2DGameView : MonoBehaviour
         _lauchBtn.onClick.AddListener(() =>
         {
             int result = checkReult();
-            if (result >0)
+            if (result >=0)
             {        
                 UpdateText(result);
             }

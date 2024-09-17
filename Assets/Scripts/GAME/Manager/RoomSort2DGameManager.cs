@@ -48,9 +48,7 @@ public class RoomSort2DGameManager : IDisposable
             SaveGameSystem.Load();
             _context.Install(SaveGameSystem);
             _stageManager = new StageManager();
-            LoadInitialLevel(_stageManager);
-
-            _gameView.InitButton(_lauchCount,HandleLauch);
+            LoadInitialLevel(_stageManager); 
             //GameObject roomGO = new GameObject("Room GO");
             //_roomRaycastCheck = new roomRaycastCheck(roomGO);
             hasInit = true;
@@ -59,7 +57,10 @@ public class RoomSort2DGameManager : IDisposable
 
     private int HandleLauch()
     {
-        if (_lauchCount <= 0) return -1;
+        if (_lauchCount <= 0) {
+          
+            return -1;
+        }
         bool result = false;
         foreach (var room in _rooms.ToList())
         {
@@ -73,12 +74,39 @@ public class RoomSort2DGameManager : IDisposable
         if (result)
         {
             _lauchCount--;
+            if (_lauchCount <=0)
+            {
+                if (CheckEndGame())
+                {
+                    GameWin();
+
+                }
+                else
+                {
+                    Debug.Log("Game Over");
+                    _gameView.GetGameOverPopup.SetActive(true);
+                }
+            }
             return _lauchCount;
 
         }
         else
         {
             return -1;
+        }
+    }
+
+    private bool CheckEndGame()
+    {
+        int count = GetAllUnitQueueCount(_gateWays);
+        if (count <= 0) return true;
+        if(count <= _levelContainer.GetLauchCount)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -109,6 +137,7 @@ public class RoomSort2DGameManager : IDisposable
     int _lauchCount;
     private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount)
     {
+        _gameView.Init();
         _blockPlacedOnCell = new Dictionary<Block, Cell>();
         _rooms = new List<Room>();
         _lauchCount = launchCount;
@@ -142,7 +171,7 @@ public class RoomSort2DGameManager : IDisposable
         InitRoomStaticFromView(roomStaticCotainer);
         InitRoomSpawner(roomSpawnerManager);
         SpawnRooms(roomSpawnerManager, roomSpawnerPoints, roomConfigCotainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
-    
+        _gameView.InitButton(_lauchCount, HandleLauch);
     }
     public void InitRoomSpawner(RoomSpawnerManager roomSpawnerManager)
     {
@@ -297,10 +326,16 @@ public class RoomSort2DGameManager : IDisposable
     {
         if (CheckGameWin(_gateWays))
         {
-            Debug.Log("Game WINN");
-            OnLevelComplete();
+            GameWin();
         }
     }
+
+    private void GameWin()
+    {
+        Debug.Log("Game WINN");
+        OnLevelComplete();
+    }
+
     #endregion
     #region UPDATE BEHAVIOUR
     public List<Block> GetlistBlock(Room targetRoom)
@@ -560,7 +595,7 @@ public class RoomSort2DGameManager : IDisposable
 
             if (_roomSpawner.All(x => x.Value == null))
             {
-                if (CheckGameWin(_gateWays))
+                if (CheckGameWin(_gateWays) || CheckEndGame())
                 {
                     return;
                 }
