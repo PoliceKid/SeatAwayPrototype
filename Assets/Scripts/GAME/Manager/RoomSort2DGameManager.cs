@@ -238,6 +238,11 @@ public class RoomSort2DGameManager : IDisposable
                 {
                     PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
                     room.ChangePlaceableState(PlaceableState.Placed);
+                    if (!_rooms.Contains(room))
+                    {
+                        _rooms.Add(room);
+                    }
+                    
                 }
             }
 
@@ -775,8 +780,7 @@ public class RoomSort2DGameManager : IDisposable
                 {
                     room.Init();
                     room.gameObject.SetActive(true);
-                    room.OnCompleteRoom += HandleCompleteRoom;
-                    _rooms.Add(room);
+                    room.OnCompleteRoom += HandleCompleteRoom;           
                     _roomSpawner.Add(point, room);
                     //save Game
                     RoomSaveGame roomSaveGame = new RoomSaveGame
