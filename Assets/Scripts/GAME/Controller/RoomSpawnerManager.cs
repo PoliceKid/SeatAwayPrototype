@@ -32,7 +32,7 @@ public class RoomSpawnerManager
             }
         }
         Room room = GetRoomByWeight(roomWithBlockCount);
-        Debug.Log(room);
+        //Debug.Log(room);
         if (room == null)
         {
             room = GetRoomWithMinBlockCount();

@@ -61,7 +61,7 @@ public class GamePlay2DState : GameState
         if (focusStatus) return;
 
         ShazamLogger.LogTemporaryChannel("SaveGame", "GamePlayState.OnApplication_Focus: " + focusStatus);
-        //_gameManager.Model.SaveGameData();
+        _gameManager.SaveGameSystem.SaveGameData();
 #endif
     }
 
@@ -70,6 +70,6 @@ public class GamePlay2DState : GameState
         if (pauseStatus == false) return;
 
         ShazamLogger.LogTemporaryChannel("SaveGame", "GamePlayState.OnApplication_Pause: " + pauseStatus);
-        //_gameManager.Model.SaveGameData();
+        _gameManager.SaveGameSystem.SaveGameData();
     }
 }

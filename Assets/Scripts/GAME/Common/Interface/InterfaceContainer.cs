@@ -14,7 +14,7 @@ public interface IOccupier
     public Vector3 GetDirection();
     public void OnPlaceable(bool isValid);
     public void InitOccupier(GameObject parent,System.Action callBack = null);
-    public GameObject GetParent();
+    public T GetParent<T>() where T: MonoBehaviour;
     public void ClearParent();
 }
 public interface IOccupierContainer<T> where T : IOccupier

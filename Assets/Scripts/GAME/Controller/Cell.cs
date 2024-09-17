@@ -24,10 +24,12 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     public int ConditionCount;
     public int ConditionCountStatic;
     public BlockType GetCellType => _cellType;
+    public Data GetData => _data;
     #endregion
     public void Init()
     {
         _data = new Data();
+        _data.Id = $"Cell {transform.localPosition.x},{transform.localPosition.z}";
         initColor = _spRd.color;
         ApplyCellType(_cellType);
         name = $"Cell Pos X: {transform.localPosition.x}, Pos Z: {transform.localPosition.z}";
@@ -248,7 +250,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
         if (!_data.Neighbors.ContainsKey(dir))
         {
             _data.Neighbors.Add(dir, cell);
-            Debug.Log($"{name} add neighbor : {cell.name}");
+            //Debug.Log($"{name} add neighbor : {cell.name}");
             SetWallActive(dir,cell);
           
         }
@@ -298,6 +300,7 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     [System.Serializable]
     public class Data
     {
+        public string Id;
         public Cell NextOnPath;
         public int Distance;
         public List<IOccupier> Occupiers = new List<IOccupier>();

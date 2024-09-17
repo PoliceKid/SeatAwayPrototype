@@ -36,6 +36,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         _data.initPoint = transform.localPosition;
         _data.initParent = parent;
         _data.CodeName = codeNameType.ToString();
+        _data.Id = System.Guid.NewGuid().ToString();
         ApplyBlockType(_blockType);
         ApplyColor(codeNameType);
         InitWall();
@@ -224,21 +225,23 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         _parent = parent;
     }
 
-    public GameObject GetParent()
+    public T GetParent<T>() where T : MonoBehaviour
     {
-        return _parent;
+        return transform.parent.GetComponent<T>();
     }
-
     public void ClearParent()
     {
         _parent = null;
     }
+
+ 
     #endregion
 
 
     [SerializeField] 
     public class Data
     {
+        public string Id;
         public string CodeName;
         public Transform initParent;
         public Vector3 initPoint;

@@ -40,14 +40,14 @@ public class Unit : MonoBehaviour, IOccupier
         _parent = parent;
         transform.parent = _parent.transform;
     }
-
     public void OnPlaceable(bool isValid)
     {
         gameObject.SetActive(false);
     }
-    public GameObject GetParent()
+    public T GetParent<T>() where T : MonoBehaviour
     {
-       return _parent;
+        // Trả về GameObject chứa Block
+        return transform.parent.GetComponent<T>();
     }
     public void ClearParent()
     {
@@ -120,7 +120,6 @@ public class Unit : MonoBehaviour, IOccupier
         }
     }
 
-  
     #endregion
 
 
