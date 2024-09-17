@@ -9,12 +9,12 @@ public class LevelContainer : MonoBehaviour
     [SerializeField] Transform _roomStaticContainer;
     [SerializeField] Transform _gateWayContainer;
     [SerializeField] Transform _roomSpawnerPointContainer;
-
+    [SerializeField] int _lauchCount;
     public Transform GetArchitectureContainer => _architectureContainer;
     public Transform GetRoomConfigContainer => _roomConfigContainer;
     public Transform GetRoomStaticContainer => _roomStaticContainer;
     public Transform GetGateWayContainer=> _gateWayContainer;
-
+    public int GetLauchCount => _lauchCount;
     public Transform[] GetRoomSpawnerPoints
     {
         get

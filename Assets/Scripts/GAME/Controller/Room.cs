@@ -19,7 +19,7 @@ public class Room : MonoBehaviour
     private Dictionary<Vector2Int, Block> _blockPositions;
     private Dictionary<Block, bool> _blockOnDestination;
     private Dictionary<Block, bool> _blockOnDestinationsBlockRaycast;
-    public System.Action<List<Block>> OnCompleteRoom = delegate { };
+    public System.Action<Room> OnCompleteRoom = delegate { };
     private PlaceableState _state;
     public List<Block> GetBlocks => _data.Blocks;
     public float GetWeight => _weight;
@@ -69,16 +69,9 @@ public class Room : MonoBehaviour
         _blockOnDestination[block] = true;
 
         if(_blockOnDestination.Values.All(x => x == true))
-        {
-            foreach (var item in _blockOnDestination)
-            {
-                Block block1 = item.Key;
-                block1.gameObject.SetActive(false);
-                block1.GetLastOccupier().OnPlaceable(true);
-                
-            }
+        {        
             SetComplete(true);
-            OnCompleteRoom?.Invoke(GetBlocks);
+            //OnCompleteRoom?.Invoke(this);
         }
         //Check can raycast
         if (!_blockOnDestinationsBlockRaycast.ContainsKey(block)) return;
@@ -88,6 +81,16 @@ public class Room : MonoBehaviour
         {
             ChangePlaceableState(PlaceableState.Placed);
             _blockOnDestinationsBlockRaycast.Clear();
+        }
+    }
+
+    public void OnComplete()
+    {
+        foreach (var item in _blockOnDestination)
+        {
+            Block block1 = item.Key;
+            block1.gameObject.SetActive(false);
+            block1.GetLastOccupier().OnPlaceable(true);
         }
     }
 

@@ -25,7 +25,6 @@ public class RoomSort2DGameManager : IDisposable
      
     }
     private List<Room> _rooms;
-    private List<Room> _roomsStatic;
     private Room _currentRoomInteract;
     private Architecture _architecture;
     private Dictionary<Block, Cell> _blockRaycastedToCellDict;
@@ -51,12 +50,38 @@ public class RoomSort2DGameManager : IDisposable
             _stageManager = new StageManager();
             LoadInitialLevel(_stageManager);
 
-
+            _gameView.InitButton(_lauchCount,HandleLauch);
             //GameObject roomGO = new GameObject("Room GO");
             //_roomRaycastCheck = new roomRaycastCheck(roomGO);
             hasInit = true;
         }
     }
+
+    private int HandleLauch()
+    {
+        if (_lauchCount <= 0) return -1;
+        bool result = false;
+        foreach (var room in _rooms.ToList())
+        {
+            if (room.IsComplete())
+            {
+                result = true;
+                room.OnComplete();
+                HandleCompleteRoom(room);
+            }
+        }
+        if (result)
+        {
+            _lauchCount--;
+            return _lauchCount;
+
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
     private void PostTick()
     {
         if (!hasInit) return;
@@ -81,12 +106,12 @@ public class RoomSort2DGameManager : IDisposable
         }
         return false;
     }
-
-    private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints)
+    int _lauchCount;
+    private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount)
     {
         _blockPlacedOnCell = new Dictionary<Block, Cell>();
         _rooms = new List<Room>();
-      
+        _lauchCount = launchCount;
         InitArchitectureFromView(architectureContainer);
         InitGateWayFromView(gateWayContainer);
         List<Room> rooms = InitRoomConfigFromView(roomConfigCotainer);
@@ -145,7 +170,6 @@ public class RoomSort2DGameManager : IDisposable
     private List<Room> InitRoomStaticFromView(Transform roomStaticContainer)
     {
         List<Room> roomsStatic = new List<Room>();
-        _roomsStatic = new List<Room>();
         foreach (Transform child in roomStaticContainer)
         {
             if (child.gameObject.activeSelf == false)
@@ -158,7 +182,7 @@ public class RoomSort2DGameManager : IDisposable
                 room.Init();
                 room.gameObject.SetActive(true);
                 roomsStatic.Add(room);
-                _roomsStatic.Add(room);
+                _rooms.Add(room);
                 room.OnCompleteRoom += HandleCompleteRoom;
             }
             List<Block> blocks = room.GetBlocks;
@@ -191,8 +215,10 @@ public class RoomSort2DGameManager : IDisposable
         }
         return roomsStatic;
     }
-    private void HandleCompleteRoom(List<Block> blocks)
+    private void HandleCompleteRoom( Room room)
     {
+        List<Block> blocks = room.GetBlocks;
+        if (blocks == null) return;
         foreach (var block in blocks)
         {
             Cell cellConaintBlock = _architecture.GetCells.FirstOrDefault(x => x.GetOccupier().Contains(block));
@@ -201,9 +227,12 @@ public class RoomSort2DGameManager : IDisposable
             {
                 cellConaintBlock.ClearOccupiers();
             }
-
         }
         CheckUnitMoveToBlock(_gateWays);
+        if (_rooms.Contains(room)){
+            _rooms.Remove(room);
+
+        }
     }
     private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
     {
@@ -910,7 +939,7 @@ public class RoomSort2DGameManager : IDisposable
             if (levelContainer != null)
             {
                 _levelContainer = levelContainer;
-                InitLevelFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints);
+                InitLevelFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints, levelContainer.GetLauchCount);
             }
         }
     }

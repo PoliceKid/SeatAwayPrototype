@@ -2,16 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI;
+using TMPro;
 public class RoomSort2DGameView : MonoBehaviour
 {
     [SerializeField] private Camera _mainCam;
     [SerializeField] private Transform _levelContainer;
+    [SerializeField] private Button _lauchBtn;
+    [SerializeField] private TextMeshProUGUI _lauchCountText;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
     public Camera GetMainCam => _mainCam;
     public LayerMask GetBlockLayerMask => _blockLayerMask;
     public LayerMask GetCellLayerMask => _cellLayerMask;
     public Transform GetLevelContainer => _levelContainer;
+    public Button GetLauchBtn => _lauchBtn;
 
     public LevelContainer SpawnLevel(GameObject levelPrefab, Vector3 point, Quaternion quaternion)
     {
@@ -39,4 +44,22 @@ public class RoomSort2DGameView : MonoBehaviour
         }
         return null;
     }
+    public void InitButton(int initLauchCount,System.Func<int> checkReult = null)
+    {
+        _lauchBtn.onClick.RemoveAllListeners();
+        UpdateText(initLauchCount);
+        _lauchBtn.onClick.AddListener(() =>
+        {
+            int result = checkReult();
+            if (result >0)
+            {        
+                UpdateText(result);
+            }
+        });
+    }
+    public void UpdateText(int result)
+    {
+        _lauchCountText.text = $"x{result.ToString()}";
+    }
+    
 }
