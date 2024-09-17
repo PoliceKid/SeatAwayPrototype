@@ -100,7 +100,7 @@ public class RoomSort2DGameManager : IDisposable
     {
         int count = GetAllUnitQueueCount(_gateWays);
         if (count <= 0) return true;
-        if(count <= _levelContainer.GetLauchCount)
+        if(count <= _levelContainer.GetMinUnitCheckGameOver)
         {
             return true;
         }
