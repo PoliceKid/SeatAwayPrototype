@@ -7,19 +7,24 @@ using UnityEngine.Rendering;
 
 public class Room : MonoBehaviour
 {
+    #region PROPERTIES
     [SerializeField] float _weight;
     [SerializeField] Transform _BlockContainer;
-    [SerializeField] SortingGroup _sortingGroup;
-    public List<Block> GetBlocks => _data.Blocks;
-    public float GetWeight => _weight;
-    public int GetBlockCount => _BlockContainer.childCount;
+    [SerializeField] SortingGroup _sortingGroup; 
+    [SerializeField] private bool _canMoveableState;
+    #endregion
+
+    #region CURRENT DATA
+    private Data _data;
     private Dictionary<Vector2Int, Block> _blockPositions;
     private Dictionary<Block, bool> _blockOnDestination;
     private Dictionary<Block, bool> _blockOnDestinationsBlockRaycast;
-    private Data _data;
-    private PlaceableState _state;
     public System.Action<List<Block>> OnCompleteRoom = delegate { };
-
+    private PlaceableState _state;
+    public List<Block> GetBlocks => _data.Blocks;
+    public float GetWeight => _weight;
+    public int GetBlockCount => _BlockContainer.childCount;
+    #endregion
     public void Init()
     {
         _data = new Data();
@@ -170,10 +175,14 @@ public class Room : MonoBehaviour
         return _data.IsCompelete;
     }
     #region PLACEABLE STATE
+    // this state is config
+    public bool GetMoveableState => _canMoveableState;
+    public void SetMoveableState(bool moveableState)
+    {
+        _canMoveableState = moveableState;
+    }
+    //This state can change in runtime
     public PlaceableState GetPlaceableState => _state;
-
-    
-
     public void ChangePlaceableState(PlaceableState newState)
     {
         _state = newState;

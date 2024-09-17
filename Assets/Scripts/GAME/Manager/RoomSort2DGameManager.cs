@@ -134,6 +134,7 @@ public class RoomSort2DGameManager : IDisposable
             if (room != null)
             {
                 room.Init();
+                room.SetMoveableState(true);
                 room.gameObject.SetActive(false);
                 roomsConfig.Add(room);
                 room.OnCompleteRoom += HandleCompleteRoom;
@@ -183,7 +184,7 @@ public class RoomSort2DGameManager : IDisposable
                 if (CheckBlockRaycastPlaceable(_blockRaycastedToCellDict))
                 {
                     PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
-                    room.ChangePlaceableState(PlaceableState.Freeze);
+                    room.ChangePlaceableState(PlaceableState.Placed);
                 }
             }
 
@@ -313,17 +314,17 @@ public class RoomSort2DGameManager : IDisposable
                     var room = blockHit.GetData.initParent.GetComponent<Room>();
                     if (room != null)
                     {
+                        if(!CheckMoveble(room)) return;
+
                         //Offset
                         Vector3 worldPosition = _gameView.GetMainCam.ScreenToWorldPoint(mousePosition);
                         clickOffset = worldPosition - room.transform.position;
 
-                        if (room.GetPlaceableState == PlaceableState.Freeze) return;
-                        if (_roomsStatic.Contains(room)) return;
                         _currentRoomInteract = room;
 
                         blocks = GetlistBlock(_currentRoomInteract);
                         if (blocks == null) return;
-                        //If room is placeable state
+                        //If room is placed state
                         if (_currentRoomInteract.GetPlaceableState == PlaceableState.Placed)
                         {
                             _currentRoomInteract.RecoverRoom();
@@ -441,6 +442,14 @@ public class RoomSort2DGameManager : IDisposable
             //_roomRaycastCheck.ClearRaycast();
         }
     }
+
+    private bool CheckMoveble(Room room)
+    {
+        if (room.GetPlaceableState == PlaceableState.Freeze) return false;
+        if (!room.GetMoveableState) return false;
+        return true;
+    }
+
     public void SetBlockRaycastToCell(Block blockRaycast, Cell cell)
     {
         if (!_blockRaycastedToCellDict.ContainsKey(blockRaycast)) return;
@@ -673,9 +682,10 @@ public class RoomSort2DGameManager : IDisposable
         //
         if (roomPrefab1 != null && roomPrefab2 != null && roomPrefab3 != null)
         {
-            int allRoomBlockCount = roomPrefab1.GetBlockCount + roomPrefab2.GetBlockCount + roomPrefab3.GetBlockCount;
+            int allRoomBlockCount = roomPrefab1.GetBlockCount + roomPrefab2.GetBlockCount + roomPrefab3.GetBlockCount+10;
             UnitQueueValiable = GetAllUnitQueueRange(UnitQueueValiable, allRoomBlockCount);
-            UnitQueueValiable = GetAllUnitSortedQueue(UnitQueueValiable);
+            UnitQueueValiable = GameHelper.ShuffleQueue(UnitQueueValiable);
+            //UnitQueueValiable = GetAllUnitSortedQueue(UnitQueueValiable);
 
             List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
             if (blockPlacedEmpties.Count > 0)
@@ -967,6 +977,11 @@ public class RoomSort2DGameManager : IDisposable
         }
         return new Queue<Unit>(unitQueue.Take(range));
     }
+    public Queue<Unit> ShuffleUnitQueue(Queue<Unit> unitQueue)
+    {
+        
+        return new Queue<Unit>();
+    }
     public Queue<Unit> GetAllUnitSortedQueue(Queue<Unit> unitQueue)
     {
         Queue<Unit> sortedUnits = new Queue<Unit>();
@@ -1111,6 +1126,7 @@ public enum PlaceableState
     Free,
     Freeze
 }
+
 public enum CodeNameType
 {
     Blue,
