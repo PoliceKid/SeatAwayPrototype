@@ -11,7 +11,8 @@ public class Unit : MonoBehaviour, IOccupier
     [SerializeField] CodeNameType _codeNameType;
     [SerializeField] private float _moveSpeed = 5f;
     #endregion
-    public System.Action<Unit> OnUnitDestination = delegate { };
+    public System.Action<Unit> OnDestination = delegate { };
+    public bool IsMoving = false;
     private UnitData _data;
     private GameObject _parent;
 
@@ -36,7 +37,8 @@ public class Unit : MonoBehaviour, IOccupier
     }
     public void InitOccupier(GameObject parent,Action callBack)
     {
-        OnUnitDestination += (unit) => callBack();
+        OnDestination += (unit) => callBack();
+        IsMoving = true;
         _parent = parent;
         transform.parent = _parent.transform;
     }
@@ -67,6 +69,7 @@ public class Unit : MonoBehaviour, IOccupier
             {
                 StopCoroutine(_moveCoroutine);
             }
+            if(gameObject.activeInHierarchy)
             _moveCoroutine =StartCoroutine(StartMove(cellPositions, onDestination));
         }
     }
@@ -89,7 +92,7 @@ public class Unit : MonoBehaviour, IOccupier
            
         }
         if(onDestination)
-        OnUnitDestination?.Invoke(this);
+        OnDestination?.Invoke(this);
     }
     #region VISUAL
     public void ApplyColor(CodeNameType codeNameType)

@@ -205,6 +205,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 
     public IOccupier GetLastOccupier()
     {
+        if (_data.Occupiers.Count <= 0) return null;
         return _data.Occupiers.Last();
     }
 

@@ -15,7 +15,6 @@ public class Gateway : MonoBehaviour
     #endregion
     #region CURRENT DATA
     private Queue<Unit> _unitQueue;
-    private Dictionary<Unit, bool> _unitCompleteWay;
     private List<Vector3> _unitQueuePos;
 
     public Queue<Unit> GetUnitQueue => _unitQueue;
@@ -26,7 +25,6 @@ public class Gateway : MonoBehaviour
     {
         _unitQueue = new Queue<Unit>();
         _unitQueuePos = new List<Vector3>();
-        _unitCompleteWay = new Dictionary<Unit, bool>();
         foreach (Transform child in _unitContainer)
         {
             Unit unit = child.GetComponent<Unit>();
@@ -35,21 +33,8 @@ public class Gateway : MonoBehaviour
                 unit.Init();
                 _unitQueue.Enqueue(unit);
                 _unitQueuePos.Add(unit.transform.position);
-                _unitCompleteWay.Add(unit, false);
-                unit.OnUnitDestination += HandleOnUnitDestination;
+           
             }
-        }
-    }
-
-    private void HandleOnUnitDestination(Unit unit)
-    {
-        if (_unitCompleteWay.ContainsKey(unit))
-        {
-            _unitCompleteWay[unit] = true;
-        }
-        if (IsCompleteWay())
-        {
-            OnCompleteWay?.Invoke();
         }
     }
     public Unit DequeueUnit()
@@ -83,10 +68,6 @@ public class Gateway : MonoBehaviour
             bool canContinue = callBack(unit);
             if (!canContinue) return;
         }
-    }
-    public bool IsCompleteWay()
-    {
-        return _unitCompleteWay.All(x => x.Value == true);
     }
     public Vector3 GetDirection()
     {

@@ -3,10 +3,7 @@ using Game.Core;
 using Injection;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Runtime.InteropServices;
-using UnityEditor.Build;
 using UnityEngine;
 [System.Serializable]
 public class RoomSort2DGameManager : IDisposable
@@ -30,6 +27,7 @@ public class RoomSort2DGameManager : IDisposable
     private Dictionary<Block, Cell> _blockRaycastedToCellDict;
     private Dictionary<Block, Cell> _blockPlacedOnCell;
     private Dictionary<Vector3, Room> _roomSpawner;
+    private Dictionary<Unit, bool> _unitOnDestinationDict;
     private List<Gateway> _gateWays;
     private StageManager _stageManager;
     private LevelContainer _levelContainer;
@@ -76,14 +74,9 @@ public class RoomSort2DGameManager : IDisposable
             _lauchCount--;
             if (_lauchCount <=0)
             {
-                if (CheckEndGame())
+                if (CheckAllUnitOndestination())
                 {
-                    GameWin();
-                }
-                else
-                {
-                    Debug.Log("Game Over");
-                    _gameView.GetGameOverPopup.SetActive(true);
+                    GameOver();
                 }
             }
             return _lauchCount;
@@ -95,7 +88,38 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
 
+    private void HandleCheckAllUnitDestination(Unit unit)
+    {
+        SetUnitOnDestination(unit);
+        if (!CheckEndGame()) return;
+        if (!CheckAllUnitOndestination()) return;
+        GameOver();        
+    }
+
+    private void GameOver()
+    {
+        ClearAllRoom(_rooms, _architecture);
+        if (CheckGameResult())
+        {
+            //Game win
+            GameWin();
+        }
+        else
+        {
+            //Game lose
+            Debug.Log("Game Over");
+            _gameView.GetGameOverPopup.SetActive(true);
+        }
+    }
     private bool CheckEndGame()
+    {
+        int count = GetAllUnitQueueCount(_gateWays);
+        if (count <= 0) return true;
+        if (_lauchCount <= 0) return true;
+
+        return false;
+    }
+    private bool CheckGameResult()
     {
         int count = GetAllUnitQueueCount(_gateWays);
         if (count <= 0) return true;
@@ -123,16 +147,6 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
-    private bool CheckGameWin(List<Gateway> _gateWays)
-    {
-        if (_gateWays.Count == 0) return false;
-        if (_gateWays.All(x => x.IsCompleteWay()))
-        {
-            return true;
-           
-        }
-        return false;
-    }
     int _lauchCount;
     private void InitLevelFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount)
     {
@@ -140,6 +154,7 @@ public class RoomSort2DGameManager : IDisposable
         _blockPlacedOnCell = new Dictionary<Block, Cell>();
         _rooms = new List<Room>();
         _lauchCount = launchCount;
+        InitUnitOnDestionation();
         InitArchitectureFromView(architectureContainer);
         InitGateWayFromView(gateWayContainer);
         List<Room> rooms = InitRoomConfigFromView(roomConfigCotainer);
@@ -187,10 +202,9 @@ public class RoomSort2DGameManager : IDisposable
             if (room != null)
             {
                 room.Init();
-                room.SetMoveableState(true);
+      
                 room.gameObject.SetActive(false);
                 roomsConfig.Add(room);
-                room.OnCompleteRoom += HandleCompleteRoom;
             }
         }
         return roomsConfig;
@@ -243,6 +257,31 @@ public class RoomSort2DGameManager : IDisposable
         }
         return roomsStatic;
     }
+    public void InitUnitOnDestionation()
+    {
+        _unitOnDestinationDict = new Dictionary<Unit, bool>();
+    }
+    public void AddUnitOnMoving(Unit unit)
+    {
+        if (!_unitOnDestinationDict.ContainsKey(unit))
+        {
+            _unitOnDestinationDict.Add(unit, false);
+
+        }
+        else
+        {
+            _unitOnDestinationDict[unit] = false;
+        }
+    }
+    public void SetUnitOnDestination(Unit unit)
+    {
+        if (!_unitOnDestinationDict.ContainsKey(unit)) return;
+        _unitOnDestinationDict[unit] = true;
+    }
+    public bool CheckAllUnitOndestination()
+    {
+        return _unitOnDestinationDict.All(x => x.Value == true);
+    }
     private void HandleCompleteRoom( Room room)
     {
         List<Block> blocks = room.GetBlocks;
@@ -259,7 +298,6 @@ public class RoomSort2DGameManager : IDisposable
         CheckUnitMoveToBlock(_gateWays);
         if (_rooms.Contains(room)){
             _rooms.Remove(room);
-
         }
     }
     private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
@@ -283,6 +321,8 @@ public class RoomSort2DGameManager : IDisposable
                     gateway.DequeueUnit();
                     gatewayCanUpdateQueue = true;
                     DisPlaceBlockToCell(block);
+                    AddUnitOnMoving(unit);
+                    unit.OnDestination += HandleCheckAllUnitDestination;
                     return true;
 
                 }
@@ -323,10 +363,6 @@ public class RoomSort2DGameManager : IDisposable
     }
     private void HandleGateWayComplete()
     {
-        if (CheckGameWin(_gateWays))
-        {
-            GameWin();
-        }
     }
 
     private void GameWin()
@@ -583,8 +619,7 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
     private void CheckSpawnRooms(Room targetRoom)
-    {
-      
+    {   
         Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
         if (currentRoomSpawnerPoint != null)
         {
@@ -592,11 +627,7 @@ public class RoomSort2DGameManager : IDisposable
 
             if (_roomSpawner.All(x => x.Value == null))
             {
-                if (CheckGameWin(_gateWays))
-                {
-                    return;
-                }
-                if (_lauchCount <= 0 && CheckEndGame()) return;
+                if (!CheckEndGame()) return;
                 SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
@@ -615,6 +646,22 @@ public class RoomSort2DGameManager : IDisposable
             SetPlaceableCellCondition(cellValiableCondition);
             DisPlaceBlockToCell(block);
 
+        }
+    }
+    private void ClearAllRoom(List<Room> rooms, Architecture architecture)
+    {
+        foreach (var room in rooms)
+        {
+            room.OnComplete();
+        }
+        rooms.Clear();
+        List<Cell> cells = _architecture.GetCells;
+        foreach (var cell in cells)
+        {
+            if (cell.IsOccupier())
+            {
+                cell.ClearOccupiers();
+            }
         }
     }
     public Block GetBlockValiable(Cell startCell, Vector3 direction, string codeName, out List<Cell> cellPath)
@@ -773,6 +820,7 @@ public class RoomSort2DGameManager : IDisposable
                 {
                     room.Init();
                     room.gameObject.SetActive(true);
+                    room.SetMoveableState(true);
                     room.OnCompleteRoom += HandleCompleteRoom;           
                     _roomSpawner.Add(point, room);
                     //save Game

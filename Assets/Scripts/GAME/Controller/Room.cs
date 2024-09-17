@@ -17,8 +17,9 @@ public class Room : MonoBehaviour
     #region CURRENT DATA
     private Data _data;
     private Dictionary<Vector2Int, Block> _blockPositions;
-    private Dictionary<Block, bool> _blockOnDestination;
-    private Dictionary<Block, bool> _blockOnDestinationsBlockRaycast;
+    private Dictionary<Block, bool> _blockOnUnitDestination;
+    private Dictionary<Block, bool> _blockOnUnitDestinationsBlockRaycast;
+
     public System.Action<Room> OnCompleteRoom = delegate { };
     private PlaceableState _state;
     public List<Block> GetBlocks => _data.Blocks;
@@ -29,8 +30,8 @@ public class Room : MonoBehaviour
     {
         _data = new Data();
         _blockPositions = new Dictionary<Vector2Int, Block>();
-        _blockOnDestination = new Dictionary<Block, bool>();
-        _blockOnDestinationsBlockRaycast = new Dictionary<Block, bool>();
+        _blockOnUnitDestination = new Dictionary<Block, bool>();
+        _blockOnUnitDestinationsBlockRaycast = new Dictionary<Block, bool>();
         foreach (Transform child in _BlockContainer)
         {
             Block block = child.GetComponent<Block>();
@@ -50,47 +51,53 @@ public class Room : MonoBehaviour
 
     private void HandleBlockStartOccupier(Block block)
     {
-        _blockOnDestinationsBlockRaycast.Add(block, false);
+        _blockOnUnitDestinationsBlockRaycast.Add(block, false);
         ChangePlaceableState(PlaceableState.Freeze);
     }
 
     private void InitBlockDestionation(Block block)
     {
-        if (!_blockOnDestination.ContainsKey(block))
+        if (!_blockOnUnitDestination.ContainsKey(block))
         {
-            _blockOnDestination.Add(block, false);
+            _blockOnUnitDestination.Add(block, false);
         }
     }
     private void HandleBlockUnitDestionation(Block block)
     {
         //Check Complete
-        if (!_blockOnDestination.ContainsKey(block)) return;
+        if (!_blockOnUnitDestination.ContainsKey(block)) return;
 
-        _blockOnDestination[block] = true;
+        _blockOnUnitDestination[block] = true;
 
-        if(_blockOnDestination.Values.All(x => x == true))
+        if(_blockOnUnitDestination.Values.All(x => x == true))
         {        
             SetComplete(true);
             //OnCompleteRoom?.Invoke(this);
         }
         //Check can raycast
-        if (!_blockOnDestinationsBlockRaycast.ContainsKey(block)) return;
-        _blockOnDestinationsBlockRaycast[block] = true;
+        if (!_blockOnUnitDestinationsBlockRaycast.ContainsKey(block)) return;
+        _blockOnUnitDestinationsBlockRaycast[block] = true;
 
-        if (_blockOnDestinationsBlockRaycast.Values.All(x => x == true))
+        if (_blockOnUnitDestinationsBlockRaycast.Values.All(x => x == true))
         {
             ChangePlaceableState(PlaceableState.Placed);
-            _blockOnDestinationsBlockRaycast.Clear();
+            _blockOnUnitDestinationsBlockRaycast.Clear();
         }
     }
 
     public void OnComplete()
     {
-        foreach (var item in _blockOnDestination)
+        gameObject.SetActive(false);
+        foreach (var item in _blockOnUnitDestination)
         {
-            Block block1 = item.Key;
-            block1.gameObject.SetActive(false);
-            block1.GetLastOccupier().OnPlaceable(true);
+            Block block = item.Key;
+            block.gameObject.SetActive(false);
+            IOccupier occupier = block.GetLastOccupier();
+            if (occupier != null)
+            {
+                occupier.OnPlaceable(true);
+            }
+           
         }
     }
 
