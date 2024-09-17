@@ -236,13 +236,8 @@ public class RoomSort2DGameManager : IDisposable
                 }
                 if (CheckBlockRaycastPlaceable(_blockRaycastedToCellDict))
                 {
-                    PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
+                    PlaceBlockRaycastToCell(room,_blockRaycastedToCellDict);
                     room.ChangePlaceableState(PlaceableState.Placed);
-                    if (!_rooms.Contains(room))
-                    {
-                        _rooms.Add(room);
-                    }
-                    
                 }
             }
 
@@ -494,7 +489,8 @@ public class RoomSort2DGameManager : IDisposable
             {
                 _currentRoomInteract.ChangePlaceableState(PlaceableState.Placed);
 
-                PlaceBlockRaycastToCell(_blockRaycastedToCellDict);
+                PlaceBlockRaycastToCell(_currentRoomInteract, _blockRaycastedToCellDict);
+            
                 CheckSpawnRooms(_currentRoomInteract);
             }
             else
@@ -540,7 +536,7 @@ public class RoomSort2DGameManager : IDisposable
     }
     #endregion
     #region ROOM API
-    public void PlaceBlockRaycastToCell(Dictionary<Block, Cell> _blockCheckRaycastDict)
+    public void PlaceBlockRaycastToCell(Room room,Dictionary<Block, Cell> _blockCheckRaycastDict)
     {
         if (_blockCheckRaycastDict == null) return;
         foreach (var blockCellValuekey in _blockCheckRaycastDict)
@@ -553,13 +549,10 @@ public class RoomSort2DGameManager : IDisposable
             block.transform.localPosition = new Vector3(0, 0, 0);
             cell.SetOccupier(block);
             PlaceBlockToCell(block, cell);
-
-            //BlockSaveGame blockSave = SaveGameSystem.GetBlockSave(block.GetData.Id);
-            //if(blockSave != null)
-            //{
-
-            //}
-
+            if (!_rooms.Contains(room))
+            {
+                _rooms.Add(room);
+            }
         }
         CheckUnitMoveToBlock(_gateWays);
         SetPlaceableCellCondition(_blockCheckRaycastDict.Values.ToList());
