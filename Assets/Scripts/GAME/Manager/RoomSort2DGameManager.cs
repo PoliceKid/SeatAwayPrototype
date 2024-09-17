@@ -168,7 +168,7 @@ public class RoomSort2DGameManager : IDisposable
                 InitBlockRaycastToCell(blocks);
                 foreach (var block in blocks)
                 {
-                    block.Init(CodeNameType.Blue, room.transform);
+                    block.Init(room.transform);
                     Ray blockRay = new Ray(block.transform.position + Vector3.up * 5, Vector3.down);
                     Cell cellSlot = null;
                     if (Physics.RaycastNonAlloc(blockRay, _raycastHits, 10f, _gameView.GetCellLayerMask) > 0)
@@ -727,7 +727,7 @@ public class RoomSort2DGameManager : IDisposable
                         {
                             unit = UnitQueueValiable.Dequeue();
                         }
-                        block.Init(unit == null ? CodeNameType.Blue : unit.GetCodeNameType(), room.transform);
+                        block.Init(room.transform, unit == null ? CodeNameType.Blue : unit.GetCodeNameType());
                         BlockSaveGame blockSave = new BlockSaveGame()
                         {
                             Id = block.GetData.Id,

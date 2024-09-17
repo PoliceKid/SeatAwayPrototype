@@ -7,6 +7,7 @@ using System;
 public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 {
     #region PROPERTY
+    [SerializeField] private CodeNameType _codeNameType;
     [SerializeField] MeshRenderer _renderer;
     [SerializeField] private SpriteRenderer _spRd;
     [SerializeField] SpriteMask _indoorSrpiteMask;
@@ -30,15 +31,22 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     public System.Action<Block> OnUnitStartOccpier = delegate { };
     private GameObject _parent;
     #endregion
-    public void Init(CodeNameType codeNameType,Transform parent)
+    public void Init(Transform parent, CodeNameType codeNameType = default)
     {
         _data = new Data();
         _data.initPoint = transform.localPosition;
         _data.initParent = parent;
-        _data.CodeName = codeNameType.ToString();
+        if(codeNameType == default)
+        {
+           _data.CodeName = _codeNameType.ToString();
+        }
+        else
+        {
+            _data.CodeName = codeNameType.ToString();
+        }
         _data.Id = System.Guid.NewGuid().ToString();
         ApplyBlockType(_blockType);
-        ApplyColor(codeNameType);
+        ApplyColor(_data.CodeName);
         InitWall();
         LocalDir = GetDirection();
         initColor = _spRd.color;
@@ -98,32 +106,35 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
             _wallBottom.gameObject.SetActive(false);
         }
     }
-    public void ApplyColor(CodeNameType codeNameType)
+    public void ApplyColor(string codeName)
     {
-        switch (codeNameType)
+        if (Enum.TryParse(codeName, true, out CodeNameType parsedCodeName))
         {
-            case CodeNameType.Blue:
-                _renderer.material.color = Color.blue;
-                break;
-            case CodeNameType.Red:
-                _renderer.material.color = Color.red;
-
-                break;
-            case CodeNameType.Yellow:
-                _renderer.material.color = Color.yellow;
-
-                break;
-            case CodeNameType.Green:
-                _renderer.material.color = Color.green;
-
-                break;
-            case CodeNameType.Purple:
-                _renderer.material.color = Color.white;
-
-                break;
-            default:
-                _renderer.material.color = Color.blue;
-                break;
+            switch (parsedCodeName)
+            {
+                case CodeNameType.Blue:
+                    _renderer.material.color = Color.blue;
+                    break;
+                case CodeNameType.Red:
+                    _renderer.material.color = Color.red;
+                    break;
+                case CodeNameType.Yellow:
+                    _renderer.material.color = Color.yellow;
+                    break;
+                case CodeNameType.Green:
+                    _renderer.material.color = Color.green;
+                    break;
+                case CodeNameType.Purple:
+                    _renderer.material.color = Color.white;
+                    break;
+                default:
+                    _renderer.material.color = Color.blue;
+                    break;
+            }
+        }
+        else
+        {
+            Debug.LogError($"Invalid CodeName: {codeName}");
         }
     }
     public void ResetPosition()
