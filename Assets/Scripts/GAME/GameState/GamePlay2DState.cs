@@ -52,7 +52,7 @@ public class GamePlay2DState : GameState
     private void OnApplication_Quit()
     {
         ShazamLogger.LogTemporaryChannel("SaveGame", "GamePlayState.OnApplication_Quit");
-        //_gameManager.Model.SaveGameData();
+        _gameManager.SaveGameSystem.SaveGameData();
     }
 
     private void OnApplication_Focus(bool focusStatus)

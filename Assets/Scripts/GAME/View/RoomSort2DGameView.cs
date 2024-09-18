@@ -9,6 +9,7 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] private Camera _mainCam;
     [SerializeField] private Transform _levelContainer;
     [SerializeField] private Button _lauchBtn;
+    [SerializeField] private Button _lauchAllBtn;
     [SerializeField] private TextMeshProUGUI _lauchCountText;
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
@@ -52,22 +53,34 @@ public class RoomSort2DGameView : MonoBehaviour
         }
         return null;
     }
-    public void InitButton(int initLauchCount,System.Func<int> checkReult = null)
+    public void InitlaunchButton(int initLauchCount,System.Func<int> checkReult = null)
     {
         _lauchBtn.onClick.RemoveAllListeners();
-        UpdateText(initLauchCount);
+        UpdateText(_lauchCountText, initLauchCount);
         _lauchBtn.onClick.AddListener(() =>
         {
             int result = checkReult();
             if (result >=0)
             {        
-                UpdateText(result);
+                UpdateText(_lauchCountText, result);
             }
         });
     }
-    public void UpdateText(int result)
+    public void InitlaunchAllButton(int initLauchCount, System.Func<int> checkReult = null)
     {
-        _lauchCountText.text = $"x{result.ToString()}";
+        _lauchAllBtn.onClick.RemoveAllListeners();
+        _lauchAllBtn.onClick.AddListener(() =>
+        {
+            int result = checkReult();
+            if (result >= 0)
+            {
+                UpdateText(_lauchCountText, result);
+            }
+        });
+    }
+    public void UpdateText(TextMeshProUGUI text,int result)
+    {
+        text.text = $"Launch left: {result.ToString()}";
     }
     
 }

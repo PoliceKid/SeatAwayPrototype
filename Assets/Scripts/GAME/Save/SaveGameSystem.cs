@@ -10,9 +10,9 @@ using System.Xml;
 public class SaveGameSystem 
 {
     private static string _gameSaveFilename = "/youngster-save.json";
-    private GameData _gameData;
-    public GameData GetGameData => _gameData;
-    public GameData Load()
+    private SaveGameData _saveGameData;
+    public SaveGameData GetGameData => _saveGameData;
+    public SaveGameData Load()
     {
         var gameModel = LoadGameData();
         return gameModel;
@@ -25,15 +25,15 @@ public class SaveGameSystem
     {
         string gameSavePath = GetGameSavePath();
         ShazamLogger.LogTemporaryChannel("SaveGame", $"Save Game Success : {gameSavePath}");
-        string content = Newtonsoft.Json.JsonConvert.SerializeObject(_gameData,formatting: Newtonsoft.Json.Formatting.Indented);
+        string content = Newtonsoft.Json.JsonConvert.SerializeObject(_saveGameData,formatting: Newtonsoft.Json.Formatting.Indented);
 
         File.WriteAllText(gameSavePath, content);
     }
-    public GameData LoadGameData()
+    public SaveGameData LoadGameData()
     {
         try
         {
-            if (_gameData == null)
+            if (_saveGameData == null)
             {
                 string gameSavePath = GetGameSavePath();
 
@@ -52,7 +52,9 @@ public class SaveGameSystem
 
                     try
                     {
-                        _gameData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(text);
+                        #if SAVEGAME
+                        _saveGameData = Newtonsoft.Json.JsonConvert.DeserializeObject<SaveGameData>(text);
+                        #endif
                     }
                     catch (Exception e)
                     {
@@ -70,34 +72,41 @@ public class SaveGameSystem
         {
             ShazamLogger.Error($"Failed to load saved game due to: {ex}");
         }
-        if (_gameData == null)
+        if (_saveGameData == null)
         {
-            _gameData = new GameData();
+            _saveGameData = new SaveGameData();
         }
-        return _gameData;
+        return _saveGameData;
     }
 
     
     public bool IsFirstOpen()
     {
-        return _gameData.IsFirstOpen;
+        return _saveGameData.IsFirstOpen;
     }
 
     #region ARCHITECTURE SAVE API
     public void SetBlockOccpier(string Id, BlockSaveGame blockSaveGame)
     {
-        _gameData.ArchitectureSaveGame.SetBlockOccpier(Id, blockSaveGame);
+        _saveGameData.ArchitectureSaveGame.SetBlockOccpier(Id, blockSaveGame);
     }
     public void ClearCellOccpier(string Id) {
-        _gameData.ArchitectureSaveGame.ClearCellOccpier(Id);
+        _saveGameData.ArchitectureSaveGame.ClearCellOccpier(Id);
     }
     public void AddRoomSave(RoomSaveGame roomSaveGame)
     {
-        _gameData.RoomSaveGames.Add(roomSaveGame);
+        if (roomSaveGame == null) return;
+        RoomSaveGame existedRoomSave = FindRoomSaveGame(roomSaveGame.Id);
+        if (existedRoomSave != null) return;
+        _saveGameData.RoomPlacedSaveGames.Add(roomSaveGame);
+    }
+    public RoomSaveGame FindRoomSaveGame(string id)
+    {
+        return _saveGameData.RoomPlacedSaveGames.FirstOrDefault(x => x.Id == id);
     }
     public BlockSaveGame GetBlockSave(string Id)
     {
-        foreach (var roomSave in _gameData.RoomSaveGames)
+        foreach (var roomSave in _saveGameData.RoomPlacedSaveGames)
         {
             BlockSaveGame blockSave = roomSave.FindBlockSave(Id);
             if(blockSave != null)
@@ -106,6 +115,11 @@ public class SaveGameSystem
             }
         }
         return null;
+    }
+
+    public void SetLaunchCount(int lauchCountSave)
+    {
+        _saveGameData.LaunchCount = lauchCountSave;
     }
     #endregion
 }

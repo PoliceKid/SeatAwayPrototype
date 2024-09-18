@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 public class Room : MonoBehaviour
 {
     #region PROPERTIES
+    [SerializeField] private string _id;
     [SerializeField] float _weight;
     [SerializeField] Transform _BlockContainer;
     [SerializeField] SortingGroup _sortingGroup; 
@@ -48,13 +49,16 @@ public class Room : MonoBehaviour
         _state = PlaceableState.Free;
         
     }
-
+    public void SetId(string id)
+    {
+        _id = id;
+    }
+    public string GetId() { return _id; }
     private void HandleBlockStartOccupier(Block block)
     {
         _blockOnUnitDestinationsBlockRaycast.Add(block, false);
         ChangePlaceableState(PlaceableState.Freeze);
     }
-
     private void InitBlockDestionation(Block block)
     {
         if (!_blockOnUnitDestination.ContainsKey(block))
@@ -84,7 +88,6 @@ public class Room : MonoBehaviour
             _blockOnUnitDestinationsBlockRaycast.Clear();
         }
     }
-
     public void OnComplete()
     {
         gameObject.SetActive(false);
@@ -100,7 +103,6 @@ public class Room : MonoBehaviour
            
         }
     }
-
     public void Dispose()
     {
 
@@ -109,7 +111,6 @@ public class Room : MonoBehaviour
     {
         _sortingGroup.sortingOrder = onMove ? 10 : 2;
     }
-
     internal void Move(Vector3 worldPosition, Dictionary<Block, Cell> _blockRaycastedToCellDict)
     {
         transform.position = worldPosition;
@@ -166,7 +167,6 @@ public class Room : MonoBehaviour
             _blockPositions[position] = block;
         }
     }
-
     public Block GetBlock(int x, int z)
     {
         Vector2Int position = new Vector2Int(x, z);

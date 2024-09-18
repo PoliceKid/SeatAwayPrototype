@@ -20,4 +20,11 @@ public static class GameHelper
         }
         return new Queue<Unit>(unitList);
     }
+    public static string GetStringBeforeCharacter(string text, char character)
+    {
+        if (string.IsNullOrEmpty(text)) return " ";
+        string[] parts = text.Split(character);
+        string extractedString = parts[0];
+        return extractedString;
+    }
 }

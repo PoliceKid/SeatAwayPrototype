@@ -31,18 +31,18 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     public System.Action<Block> OnUnitStartOccpier = delegate { };
     private GameObject _parent;
     #endregion
-    public void Init(Transform parent, CodeNameType codeNameType = default)
+    public void Init(Transform parent, string codeNameType = null)
     {
         _data = new Data();
         _data.initPoint = transform.localPosition;
         _data.initParent = parent;
-        if(codeNameType == default)
+        if(string.IsNullOrEmpty(codeNameType))
         {
            _data.CodeName = _codeNameType.ToString();
         }
         else
         {
-            _data.CodeName = codeNameType.ToString();
+            _data.CodeName = codeNameType;
         }
         _data.Id = System.Guid.NewGuid().ToString();
         ApplyBlockType(_blockType);

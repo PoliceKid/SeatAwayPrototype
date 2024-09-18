@@ -51,7 +51,11 @@ public class GameStartBehaviour : MonoBehaviour
     {
         _timer.FixedUpdate();
     }
-
+    private void OnDisable()
+    {
+        if (_timer != null)
+            _timer.OnApplicationQuit();
+    }
     private void OnApplicationQuit()
     {
         if (_timer != null)

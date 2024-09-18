@@ -39,6 +39,10 @@ public class RoomSpawnerManager
         }
         return room;
     }
+    public Room GetRoomConfig(string Id)
+    {
+        return _roomSpawners.FirstOrDefault(x => x.GetId() == Id);
+    }
     public void DecreaseRoomConfigWeight(Room roomConfig, int weight)
     {
         if (roomConfig == null) return;
@@ -46,6 +50,7 @@ public class RoomSpawnerManager
     }
     public void AddRoomConfig(List<Room> rooms)
     {
+        if (rooms == null) return;
         foreach (var room in rooms)
         {
             //_roomWeights.Add(room, room.GetBlockCount);
