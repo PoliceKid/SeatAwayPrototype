@@ -88,7 +88,7 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
 
-    private void HandleCheckAllUnitDestination(Unit unit)
+    private void HandleCheckGameOver(Unit unit)
     {
         SetUnitOnDestination(unit);
         if (!CheckEndGame()) return;
@@ -322,7 +322,7 @@ public class RoomSort2DGameManager : IDisposable
                     gatewayCanUpdateQueue = true;
                     DisPlaceBlockToCell(block);
                     AddUnitOnMoving(unit);
-                    unit.OnDestination += HandleCheckAllUnitDestination;
+                    unit.OnDestination += HandleCheckGameOver;
                     return true;
 
                 }
