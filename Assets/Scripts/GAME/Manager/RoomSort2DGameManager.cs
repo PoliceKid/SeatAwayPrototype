@@ -627,7 +627,7 @@ public class RoomSort2DGameManager : IDisposable
 
             if (_roomSpawner.All(x => x.Value == null))
             {
-                if (!CheckEndGame()) return;
+                if (CheckEndGame()) return;
                 SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
             }
         }
