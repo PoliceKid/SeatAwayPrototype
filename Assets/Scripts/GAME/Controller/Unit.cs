@@ -57,7 +57,9 @@ public class Unit : MonoBehaviour, IOccupier
     }
     public void JumpTo(Vector3 targetPoint)
     {
-        transform.DOJump(targetPoint, 10, 1, 1);
+        transform.DOJump(targetPoint, 10, 1, 1).OnComplete(() => {
+            OnDestination?.Invoke(this);
+        });
     }
     private Coroutine _moveCoroutine;
     public void MoveTo(List<Vector3> cellPositions, bool onDestination = false)

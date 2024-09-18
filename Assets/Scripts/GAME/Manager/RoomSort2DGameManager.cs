@@ -34,9 +34,10 @@ public class RoomSort2DGameManager : IDisposable
     private LevelContainer _levelContainer;
     private RoomSpawnerManager _roomSpawnerManager;
     private roomRaycastCheck _roomRaycastCheck;
-    private bool hasInit;
     private int _lauchCount;
     private int _jumpCount;
+    private bool hasInit;
+    private RaycastMode _raycastMode;
     #endregion
     #region FLOW
     public void Initialize()
@@ -52,8 +53,10 @@ public class RoomSort2DGameManager : IDisposable
             LoadInitialLevel(_stageManager); 
             //GameObject roomGO = new GameObject("Room GO");
             //_roomRaycastCheck = new roomRaycastCheck(roomGO);
-            hasInit = true;
         }
+        _raycastMode = RaycastMode.NORMAL;
+        hasInit = true;
+
     }
 
     private int HandleLauch()
@@ -112,25 +115,28 @@ public class RoomSort2DGameManager : IDisposable
             return -1;
         }
     }
-    private int HandleJump()
+    private bool HandleJump()
     {
         if (_jumpCount <= 0)
         {
-            return -1;
+            return false;
         }
-        bool result = true;
+        Queue<Unit> unitQueue = GetAllUnitQueue(_gateWays);
+        if (unitQueue == null) return false;
+        Unit firstUnit = unitQueue.Dequeue();
+        if (firstUnit == null) return false;
+        List<Block> blocksPlacedEmpty = GetBlockPlacedEmpty();
+        blocksPlacedEmpty = blocksPlacedEmpty.Where(x => x.GetCodeName() == firstUnit.GetCodeName()).ToList();
 
-        if (result)
+        if (blocksPlacedEmpty == null || blocksPlacedEmpty.Count ==0) return false;
+        _currentUnitJump = firstUnit;
+        SwitchRayCastMode(RaycastMode.JUMP);
+        foreach (var block in blocksPlacedEmpty)
         {
-            _lauchCount--;
-            
+            block.ActiveOutline(true);
+        }
+        return true;
 
-            return _lauchCount;
-        }
-        else
-        {
-            return -1;
-        }
     }
     private void HandleCheckGameOver(Unit unit)
     {
@@ -176,11 +182,22 @@ public class RoomSort2DGameManager : IDisposable
             return false;
         }
     }
-
     private void PostTick()
     {
         if (!hasInit) return;
-        CheckRaycast();
+        switch (_raycastMode)
+        {
+            case RaycastMode.NORMAL:
+                CheckRaycast();
+
+                break;
+            case RaycastMode.JUMP:
+                CheckRaycastJump();
+                break;
+            default:
+                CheckRaycast();
+                break;
+        }
     }
     private void FixedTick()
     {
@@ -191,14 +208,13 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
-
     private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int jumpCount)
     {
         _lauchCount = launchCount;
         _jumpCount = jumpCount;
         _gameView.InitlaunchButton(_lauchCount, HandleLauch);
         _gameView.InitlaunchAllButton(_lauchCount, HandleLauchAll);
-        _gameView.InitJumplButton(_jumpCount, HandleJump);
+        _gameView.InitJumplButton(_jumpCount, _checkJumpResult, HandleJump);
         if (_roomStatics.Count > 0)
         {
             PlaceRooms(_roomStatics);
@@ -602,6 +618,7 @@ public class RoomSort2DGameManager : IDisposable
         }
     }
     Unit _currentUnitJump;
+    public static System.Action<int> _checkJumpResult = delegate { };
     private void CheckRaycastJump()
     {
         if (Input.GetMouseButtonUp(0))
@@ -619,6 +636,34 @@ public class RoomSort2DGameManager : IDisposable
                     if (blockHit.IsOccupier()) return;
                     blockHit.SetOccupier(_currentUnitJump);
                     _currentUnitJump.JumpTo(blockHit.transform.position);
+                    foreach (var gateway in _gateWays)
+                    {
+                        var unitQueue = gateway.GetUnitQueue;
+
+                        if (unitQueue.TryPeek(out Unit result))
+                        {
+                            if (result == _currentUnitJump)
+                            {
+                                unitQueue.Dequeue();
+                                gateway.MoveUnitsInQueue();
+                                break;
+                            }
+                        }
+                    }
+
+                    DisPlaceBlockToCell(blockHit);
+                    AddUnitOnMoving(_currentUnitJump);
+                    _currentUnitJump.OnDestination += HandleCheckGameOver;
+                    List<Block> blocksPlacedEmpty = GetBlockPlacedEmpty();
+                    
+                    foreach (var block in blocksPlacedEmpty)
+                    {
+                        block.ActiveOutline(false);
+                    }
+                    blockHit.ActiveOutline(false);
+                    SwitchRayCastMode(RaycastMode.NORMAL);
+                    _jumpCount--;
+                    _checkJumpResult?.Invoke(_jumpCount);
                 }
             }
         }
@@ -842,6 +887,10 @@ public class RoomSort2DGameManager : IDisposable
         }
 
         return neighbors;
+    }
+    public void SwitchRayCastMode(RaycastMode newRayCastMode)
+    {
+        _raycastMode = newRayCastMode;
     }
     #endregion
     #region SPAWN
@@ -1200,39 +1249,6 @@ public class RoomSort2DGameManager : IDisposable
         }
         return new Queue<Unit>(unitQueue.Take(range));
     }
-    public Queue<Unit> ShuffleUnitQueue(Queue<Unit> unitQueue)
-    {
-        
-        return new Queue<Unit>();
-    }
-    public Queue<Unit> GetAllUnitSortedQueue(Queue<Unit> unitQueue)
-    {
-        Queue<Unit> sortedUnits = new Queue<Unit>();
-        Dictionary<string, Queue<Unit>> unitSortByCodeName = new Dictionary<string, Queue<Unit>>();
-
-        foreach (Unit unit in unitQueue)
-        {
-            string codeName = unit.GetCodeName();
-
-            if (unitSortByCodeName.ContainsKey(codeName))
-            {
-                unitSortByCodeName[codeName].Enqueue(unit);
-            }
-            else
-            {
-                unitSortByCodeName[codeName] = new Queue<Unit>();
-                unitSortByCodeName[codeName].Enqueue(unit);
-            }
-        }
-        foreach (var unitTheSameCodeName in unitSortByCodeName)
-        {
-            foreach (var unit in unitTheSameCodeName.Value)
-            {
-                sortedUnits.Enqueue(unit);
-            }
-        }
-        return sortedUnits;
-    }
     public int GetAllUnitQueueCount(List<Gateway> _gateWays)
     {
         return _gateWays.SelectMany(gw => gw.GetUnitQueue).ToQueue().Count;
@@ -1266,7 +1282,8 @@ public class RoomSort2DGameManager : IDisposable
         SaveGameSystem.SaveGameData();
 #endif
     }
-#endregion
+    
+    #endregion
 }
 [Serializable]
 public class roomRaycastCheck
@@ -1348,6 +1365,11 @@ public class BlockRaycast
         TargetCell = null;
         IsFree = true;
     }
+}
+public enum RaycastMode
+{
+    NORMAL,
+    JUMP
 }
 public enum BlockType
 {

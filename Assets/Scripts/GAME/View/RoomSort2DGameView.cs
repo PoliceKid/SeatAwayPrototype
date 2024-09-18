@@ -24,6 +24,7 @@ public class RoomSort2DGameView : MonoBehaviour
     public Button GetLauchBtn => _launchBtn;
     public GameObject GetGameOverPopup => _gameOverPopup;
 
+    public TextMeshProUGUI JumpCountText => _JumpCountText;
     public void Init()
     {
         _gameOverPopup.gameObject.SetActive(false);
@@ -80,16 +81,24 @@ public class RoomSort2DGameView : MonoBehaviour
             }
         });
     }
-    public void InitJumplButton(int initJumpCount, System.Func<int> checkReult = null)
+    public void InitJumplButton(int initJumpCount,System.Action<int> checkJumpResult, System.Func<bool> performAction = null)
     {
-        _jumpBtn.onClick.RemoveAllListeners();
         UpdateText(_JumpCountText, $"Jump x{initJumpCount.ToString()}");
+        checkJumpResult = (result) => { 
+            UpdateText(_JumpCountText, $"Jump x{result.ToString()}"); 
+        };
+        _jumpBtn.onClick.RemoveAllListeners();
         _jumpBtn.onClick.AddListener(() =>
         {
-            int result = checkReult();
-            if (result >= 0)
+             
+            if (performAction != null)
             {
-                UpdateText(_JumpCountText, $"Jump x{result.ToString()}");
+                bool result = performAction();
+                if (result)
+                {
+                    //UpdateText(_JumpCountText, $"Jump x{result.ToString()}");
+                    //Active Button canlce here
+                }
             }
         });
     }

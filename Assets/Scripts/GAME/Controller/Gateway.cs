@@ -44,6 +44,7 @@ public class Gateway : MonoBehaviour
     }
     public Unit PeekUnit()
     {
+        if (_unitQueue.Count == 0) return null;
         Unit unit = _unitQueue.Peek();
         return unit;
     }
