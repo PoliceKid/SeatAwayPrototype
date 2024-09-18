@@ -55,9 +55,9 @@ public class Unit : MonoBehaviour, IOccupier
     {
         _parent = null;
     }
-    public void MoveTo(Vector3 pos)
+    public void JumpTo(Vector3 targetPoint)
     {
-        
+        transform.DOJump(targetPoint, 10, 1, 1);
     }
     private Coroutine _moveCoroutine;
     public void MoveTo(List<Vector3> cellPositions, bool onDestination = false)

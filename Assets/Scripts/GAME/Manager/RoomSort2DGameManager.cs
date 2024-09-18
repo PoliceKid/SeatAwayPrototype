@@ -36,6 +36,7 @@ public class RoomSort2DGameManager : IDisposable
     private roomRaycastCheck _roomRaycastCheck;
     private bool hasInit;
     private int _lauchCount;
+    private int _jumpCount;
     #endregion
     #region FLOW
     public void Initialize()
@@ -95,11 +96,7 @@ public class RoomSort2DGameManager : IDisposable
         {
             return -1;
         }
-        bool result = true;
-        foreach (var room in _rooms.ToList())
-        {                     
-            room.OnComplete();            
-        }
+        bool result = true;       
         ClearAllRoom(_rooms,_architecture);
         if (result)
         {
@@ -108,6 +105,26 @@ public class RoomSort2DGameManager : IDisposable
             {
                 GameOver();
             }    
+            return _lauchCount;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    private int HandleJump()
+    {
+        if (_jumpCount <= 0)
+        {
+            return -1;
+        }
+        bool result = true;
+
+        if (result)
+        {
+            _lauchCount--;
+            
+
             return _lauchCount;
         }
         else
@@ -175,11 +192,13 @@ public class RoomSort2DGameManager : IDisposable
         _timer.FIXED_TICK -= FixedTick;
     }
 
-    private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int launchAllCount)
+    private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int jumpCount)
     {
         _lauchCount = launchCount;
+        _jumpCount = jumpCount;
         _gameView.InitlaunchButton(_lauchCount, HandleLauch);
         _gameView.InitlaunchAllButton(_lauchCount, HandleLauchAll);
+        _gameView.InitJumplButton(_jumpCount, HandleJump);
         if (_roomStatics.Count > 0)
         {
             PlaceRooms(_roomStatics);
@@ -582,7 +601,28 @@ public class RoomSort2DGameManager : IDisposable
             //_roomRaycastCheck.ClearRaycast();
         }
     }
+    Unit _currentUnitJump;
+    private void CheckRaycastJump()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            Vector3 mousePosition = Input.mousePosition;
+            Ray ray = _gameView.GetMainCam.ScreenPointToRay(mousePosition);
 
+            if (Physics.RaycastNonAlloc(ray, _raycastHits, 100f, _gameView.GetBlockLayerMask) > 0)
+            {
+                RaycastHit hit = _raycastHits[0];
+                Block blockHit = hit.collider.GetComponentInParent<Block>();
+                if (blockHit != null)
+                {
+                    if (_currentUnitJump == null) return;
+                    if (blockHit.IsOccupier()) return;
+                    blockHit.SetOccupier(_currentUnitJump);
+                    _currentUnitJump.JumpTo(blockHit.transform.position);
+                }
+            }
+        }
+    }
     private bool CheckMoveble(Room room)
     {
         if (room.GetPlaceableState == PlaceableState.Freeze) return false;
@@ -1086,8 +1126,8 @@ public class RoomSort2DGameManager : IDisposable
                 //Save Game
                 if (SaveGameSystem.GetGameData.RoomPlacedSaveGames == null)
                 {
-                    SaveGameSystem.GetGameData.RoomPlacedSaveGames = new List<RoomSaveGame>();
-                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints, levelContainer.GetLauchCount, levelContainer.GetLauchAllCount);
+                    //SaveGameSystem.GetGameData.RoomPlacedSaveGames = new List<RoomSaveGame>();
+                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints, levelContainer.GetLauchCount, levelContainer.GetJumpCount);
 
                 }
                 else
@@ -1218,13 +1258,15 @@ public class RoomSort2DGameManager : IDisposable
     #region SAVE API
     public void SaveRoom(Room room)
     {
+#if SAVEGAME
         //save Game
         RoomSaveGame roomSaveGame = new RoomSaveGame();
         roomSaveGame.CloneDataFromOriginal(room);
         SaveGameSystem.AddRoomSave(roomSaveGame);
         SaveGameSystem.SaveGameData();
+#endif
     }
-    #endregion
+#endregion
 }
 [Serializable]
 public class roomRaycastCheck

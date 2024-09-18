@@ -20,6 +20,7 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     [SerializeField] GameObject _wallRight;
     [SerializeField] GameObject _wallTop;
     [SerializeField] GameObject _wallBottom;
+    [SerializeField] GameObject _outline;
     #endregion
     #region CURRENT DATA
     private Data _data;
@@ -150,6 +151,10 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         _spRd.color = !isPlaceable?Color.red: initColor;
         validPlacable = isPlaceable;
+    }
+    public void ActiveOutline(bool isActive)
+    {
+        _outline.gameObject.SetActive(isActive);
     }
     private bool validPlacable;
     public bool ValidPlaceable => validPlacable;

@@ -8,9 +8,11 @@ public class RoomSort2DGameView : MonoBehaviour
 {
     [SerializeField] private Camera _mainCam;
     [SerializeField] private Transform _levelContainer;
-    [SerializeField] private Button _lauchBtn;
-    [SerializeField] private Button _lauchAllBtn;
+    [SerializeField] private Button _launchBtn;
+    [SerializeField] private Button _launchAllBtn;
+    [SerializeField] private Button _jumpBtn;
     [SerializeField] private TextMeshProUGUI _lauchCountText;
+    [SerializeField] private TextMeshProUGUI _JumpCountText;
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
@@ -19,7 +21,7 @@ public class RoomSort2DGameView : MonoBehaviour
     public LayerMask GetBlockLayerMask => _blockLayerMask;
     public LayerMask GetCellLayerMask => _cellLayerMask;
     public Transform GetLevelContainer => _levelContainer;
-    public Button GetLauchBtn => _lauchBtn;
+    public Button GetLauchBtn => _launchBtn;
     public GameObject GetGameOverPopup => _gameOverPopup;
 
     public void Init()
@@ -55,32 +57,45 @@ public class RoomSort2DGameView : MonoBehaviour
     }
     public void InitlaunchButton(int initLauchCount,System.Func<int> checkReult = null)
     {
-        _lauchBtn.onClick.RemoveAllListeners();
-        UpdateText(_lauchCountText, initLauchCount);
-        _lauchBtn.onClick.AddListener(() =>
+        _launchBtn.onClick.RemoveAllListeners();
+        UpdateText(_lauchCountText, $"Launch left: {initLauchCount.ToString()}");
+        _launchBtn.onClick.AddListener(() =>
         {
             int result = checkReult();
             if (result >=0)
             {        
-                UpdateText(_lauchCountText, result);
+                UpdateText(_lauchCountText, $"Launch left: {result.ToString()}");
             }
         });
     }
     public void InitlaunchAllButton(int initLauchCount, System.Func<int> checkReult = null)
     {
-        _lauchAllBtn.onClick.RemoveAllListeners();
-        _lauchAllBtn.onClick.AddListener(() =>
+        _launchAllBtn.onClick.RemoveAllListeners();
+        _launchAllBtn.onClick.AddListener(() =>
         {
             int result = checkReult();
             if (result >= 0)
             {
-                UpdateText(_lauchCountText, result);
+                UpdateText(_lauchCountText, $"Launch left: {result.ToString()}");
             }
         });
     }
-    public void UpdateText(TextMeshProUGUI text,int result)
+    public void InitJumplButton(int initJumpCount, System.Func<int> checkReult = null)
     {
-        text.text = $"Launch left: {result.ToString()}";
+        _jumpBtn.onClick.RemoveAllListeners();
+        UpdateText(_JumpCountText, $"Jump x{initJumpCount.ToString()}");
+        _jumpBtn.onClick.AddListener(() =>
+        {
+            int result = checkReult();
+            if (result >= 0)
+            {
+                UpdateText(_JumpCountText, $"Jump x{result.ToString()}");
+            }
+        });
+    }
+    public void UpdateText(TextMeshProUGUI text,string result)
+    {
+        text.text = result;
     }
     
 }
