@@ -41,7 +41,8 @@ public class Gateway : MonoBehaviour
     }
     public Unit DequeueUnit()
     {
-        Unit unit = _unitQueue.Dequeue();       
+        if (_unitQueue.Count <= 0) return null;
+        Unit unit = _unitQueue.Dequeue();
         return unit;
     }
     public Unit PeekUnit()
@@ -50,9 +51,10 @@ public class Gateway : MonoBehaviour
         Unit unit = _unitQueue.Peek();
         return unit;
     }
-    public void MoveUnitsInQueue()
+    public void UpdateUnitQueuePosition()
     {
-        Queue<Unit> _unitQueueTemp = new Queue<Unit>(_unitQueue);
+        Queue<Unit> _unitQueueTemp = new Queue<Unit>(_unitQueue).ToQueue();
+
         foreach (var queuePos in _unitQueuePos)
         {
             if (_unitQueueTemp.Count > 0)

@@ -13,6 +13,8 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] private Button _jumpBtn;
     [SerializeField] private TextMeshProUGUI _lauchCountText;
     [SerializeField] private TextMeshProUGUI _JumpCountText;
+    [SerializeField] private TextMeshProUGUI _unitCountOverView;
+    [SerializeField] private TextMeshProUGUI _unitWinCondition;
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
@@ -105,6 +107,9 @@ public class RoomSort2DGameView : MonoBehaviour
     public void UpdateText(TextMeshProUGUI text,string result)
     {
         text.text = result;
+    }   
+    public void HandleUpdateUnitOverviewText(int totalUnitComplete,int initTotalUnit)
+    {
+        UpdateText(_unitCountOverView, $"Unit: {totalUnitComplete}/{initTotalUnit}");
     }
-    
 }

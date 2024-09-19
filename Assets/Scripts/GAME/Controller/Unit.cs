@@ -45,7 +45,7 @@ public class Unit : MonoBehaviour, IOccupier
     }
     public void OnPlaceable(bool isValid)
     {
-        gameObject.SetActive(false);
+        //gameObject.SetActive(false);
     }
     public T GetParent<T>() where T : MonoBehaviour
     {
@@ -68,11 +68,11 @@ public class Unit : MonoBehaviour, IOccupier
         if(cellPositions == null) return;
         if (cellPositions.Count > 0)
         {
-            //if (_moveCoroutine != null)
-            //{
-            //    coroutineHelper.StopCoroutine(_moveCoroutine);
-            //    _moveCoroutine = null;
-            //}
+            if (_moveCoroutine != null)
+            {
+                coroutineHelper.StopCoroutine(_moveCoroutine);
+                _moveCoroutine = null;
+            }
             //if(gameObject.activeInHierarchy)
             _moveCoroutine = coroutineHelper.StartCoroutine(StartMove(cellPositions, onDestination));
         }
