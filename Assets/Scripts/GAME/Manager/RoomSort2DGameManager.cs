@@ -252,7 +252,8 @@ public class RoomSort2DGameManager : IDisposable
                      block.Init(room.transform, blockSave.CodeName);
                 }
                 PlaceRoom(room);
-               });
+                InitNeighborBlockFromRoom(room);
+                });
         }
     }
     List<Room> _roomStatics;
@@ -340,13 +341,14 @@ public class RoomSort2DGameManager : IDisposable
             _rooms.Add(room);
             room.OnCompleteRoom += HandleCompleteRoom;
             room.SetId($"room static:{count}");
-            count++;
+
             List<Block> blocks = room.GetBlocks;
             foreach (var block in blocks)
             {
                 block.Init(room.transform);
             }
-
+            InitNeighborBlockFromRoom(room);
+            count++;
         }
         return roomsStatic;
     }
@@ -408,13 +410,13 @@ public class RoomSort2DGameManager : IDisposable
                     {
                         return false;
                     }
+                    gatewayCanUpdateQueue = true;
+
                     block.SetOccupier(unit);
                     List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
                     unit.MoveTo(pathPositions, onDestination: true);
                     gateway.DequeueUnit();
-                    gatewayCanUpdateQueue = true;
                     AddUnitOnMoving(unit);
-                    RemoveBlockPlacable(block);
                     unit.OnDestination += HandleUnitOndestination;
                     return true;
 
@@ -656,7 +658,6 @@ public class RoomSort2DGameManager : IDisposable
                             }
                         }
                     }
-                    RemoveBlockPlacable(blockHit);
                     AddUnitOnMoving(_currentUnitJump);
                     _currentUnitJump.OnDestination += HandleUnitOndestination;
                     foreach (var block in blocksPlacable)
@@ -841,8 +842,8 @@ public class RoomSort2DGameManager : IDisposable
             Cell cell = blockOnCell.Value;
             Block block = blockOnCell.Key;
             if (cell == null || block == null) continue;
-
-            if (block.IsFullOccupier()) continue;
+            if (!cell.IsOccupier()) continue;
+            if (block.IsOccupier()) continue;
             if (block.GetData.CodeName != codeName) continue;
             cellPath = _pathFindingService.FindPath(startCell, cell);
 
@@ -852,22 +853,18 @@ public class RoomSort2DGameManager : IDisposable
         return null;
 
     }
-    private void InitNeighborBlockFromRoom(List<Room> rooms)
+    private void InitNeighborBlockFromRoom(Room room)
     {
-        if (rooms == null) return;
-        foreach (var room in rooms)
+        var blocks = GetlistBlock(room);
+        foreach (var block in blocks)
         {
-            var blocks = GetlistBlock(room);
-            foreach (var block in blocks)
+            var neighbors = GetBlockNeighbors(room, block);
+            foreach (var valueKey in neighbors)
             {
-                var neighbors = GetBlockNeighbors(room, block);
-                foreach (var valueKey in neighbors)
-                {
-                    block.SetNeighbor(valueKey.Key, valueKey.Value);
-                }
+                block.SetNeighbor(valueKey.Key, valueKey.Value);
             }
+            
         }
-
     }
     public Dictionary<Vector3, Block> GetBlockNeighbors(Room room, Block block)
     {
@@ -990,6 +987,7 @@ public class RoomSort2DGameManager : IDisposable
                             }
                             block.Init(room.transform, unit == null ? CodeNameType.Blue.ToString() : unit.GetCodeNameType().ToString());
                         }
+                        InitNeighborBlockFromRoom(room);
                     });
                 roomSpawnerManager.DecreaseRoomConfigWeight(roomConfig, -1);
                 index++;

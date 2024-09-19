@@ -68,10 +68,11 @@ public class Unit : MonoBehaviour, IOccupier
         if(cellPositions == null) return;
         if (cellPositions.Count > 0)
         {
-            if (_moveCoroutine != null)
-            {
-                coroutineHelper.StopCoroutine(_moveCoroutine);
-            }
+            //if (_moveCoroutine != null)
+            //{
+            //    coroutineHelper.StopCoroutine(_moveCoroutine);
+            //    _moveCoroutine = null;
+            //}
             //if(gameObject.activeInHierarchy)
             _moveCoroutine = coroutineHelper.StartCoroutine(StartMove(cellPositions, onDestination));
         }
@@ -82,7 +83,7 @@ public class Unit : MonoBehaviour, IOccupier
         while (currentCellIndex < cellPositions.Count)
         {
             Vector3 targetPosition = cellPositions[currentCellIndex];
-            while (Vector3.Distance(transform.position, targetPosition) > 0.05f)
+            while (Vector3.Distance(transform.position, targetPosition) > 0.01f)
             {
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, _moveSpeed * Time.deltaTime);
                 yield return null;
