@@ -29,7 +29,7 @@ public class LevelEditorWindow : EditorWindow
         BlockPrefab = (GameObject)EditorGUILayout.ObjectField("Block Prefab", BlockPrefab, typeof(GameObject), false);
         unitContainerName = EditorGUILayout.TextField("Container Name", unitContainerName);
         unitContainerNameClone = EditorGUILayout.TextField("Container Clone Name", unitContainerNameClone);
-        index = EditorGUILayout.IntField("Container Clone Name", index);
+        index = EditorGUILayout.IntField("Index", index);
         EditorGUILayout.Space();
 
         if (GUILayout.Button("Update Prefab Level"))
@@ -58,14 +58,14 @@ public class LevelEditorWindow : EditorWindow
         }
 
         // Find the unit container in the prefab by name
-        Transform prefabUnitContainer = prefabRoot.transform.Find(unitContainerName);
+        Transform prefabUnitContainer = prefabRoot.transform.GetChild(0).GetChild(0).Find(unitContainerName);
         if (prefabUnitContainer == null)
         {
             Debug.LogError($"Unit Container '{unitContainerName}' not found in the prefab.");
             PrefabUtility.UnloadPrefabContents(prefabRoot);
             return;
         }
-        Transform prefabUnitContainerClone = prefabRoot.transform.Find(unitContainerNameClone);
+        Transform prefabUnitContainerClone = prefabRoot.transform.GetChild(0).GetChild(0).Find(unitContainerNameClone);
         if (prefabUnitContainerClone == null)
         {
             Debug.LogError($"Unit Container '{unitContainerName}' not found in the prefab.");
@@ -90,11 +90,12 @@ public class LevelEditorWindow : EditorWindow
             //newUnit.transform.rotation = sourceUnit.transform.rotation;
             PrefabUtility.ConnectGameObjectToPrefab(sourceUnit, unitPrefab);
             // Copy all components
-            CopyComponents(sourceUnitClone, sourceUnit);
+            //CopyComponents(sourceUnitClone, sourceUnit);
 
             //sourceUnit.GetComponent<Unit>().AssignReder();
-            sourceUnit.GetComponent<Room>().EditorAssign();
-            CloneRoom(sourceUnitClone, sourceUnit);
+            //sourceUnit.GetComponent<Room>().EditorAssign();
+            //CloneRoom(sourceUnitClone, sourceUnit);
+            ClonePosition(sourceUnitClone, sourceUnit);
             count++;
         }
 
@@ -139,5 +140,10 @@ public class LevelEditorWindow : EditorWindow
             destinationUnit.transform.localRotation = sourceUnit.transform.localRotation;
             destinationUnit.GetComponent<Block>().EditorCodenameType(destinationUnit.GetComponent<Block>().GetCodeNameType);
         }
+    }
+    void ClonePosition(GameObject source, GameObject destination)
+    {
+        destination.transform.localPosition = source.transform.localPosition;
+        destination.transform.localRotation = source.transform.localRotation;
     }
 }
