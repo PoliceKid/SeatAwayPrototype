@@ -29,4 +29,12 @@ public class CoroutineHelper : MonoBehaviour
         yield return new WaitForEndOfFrame();
         calllBack?.Invoke();
     }
+    public Coroutine HandleStartCoroutine(IEnumerator enumerator)
+    {
+        return StartCoroutine(enumerator);
+    }
+    public void HandleStopCoroutine(IEnumerator enumerator)
+    {
+        StopCoroutine(enumerator);
+    }
 }

@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Injection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ public class Gateway : MonoBehaviour
     public Cell GetConnectedCell => _connectedCell;
     public System.Action OnCompleteWay = delegate { };
     #endregion
-    public void Init()
+    public void Init(Injector injector)
     {
         _unitQueue = new Queue<Unit>();
         _unitQueuePos = new List<Vector3>();
@@ -31,6 +32,7 @@ public class Gateway : MonoBehaviour
             if (unit != null)
             {
                 unit.Init();
+                injector.Inject(unit);
                 _unitQueue.Enqueue(unit);
                 _unitQueuePos.Add(unit.transform.position);
            

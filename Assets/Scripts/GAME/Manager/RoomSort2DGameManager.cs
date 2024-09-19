@@ -58,7 +58,6 @@ public class RoomSort2DGameManager : IDisposable
         hasInit = true;
 
     }
-
     private int HandleLauch()
     {
         if (_lauchCount <= 0) {
@@ -99,6 +98,9 @@ public class RoomSort2DGameManager : IDisposable
         {
             return -1;
         }
+        List<Cell> cellsPlacable = GetCellPlaced();
+        if(cellsPlacable.Count ==0) return -1;
+        if (!CheckAllUnitOndestination()) return -1;
         bool result = true;       
         ClearAllRoom(_rooms,_architecture);
         if (result)
@@ -125,27 +127,27 @@ public class RoomSort2DGameManager : IDisposable
         if (unitQueue == null) return false;
         Unit firstUnit = unitQueue.Dequeue();
         if (firstUnit == null) return false;
-        List<Block> blocksPlacedEmpty = GetBlockPlacedEmpty();
-        blocksPlacedEmpty = blocksPlacedEmpty.Where(x => x.GetCodeName() == firstUnit.GetCodeName()).ToList();
 
-        if (blocksPlacedEmpty == null || blocksPlacedEmpty.Count ==0) return false;
+        List<Block> blocksPlacable = GetBlocksPlacable();
+        blocksPlacable = blocksPlacable.Where(x => x.GetCodeName() == firstUnit.GetCodeName()).ToList();
+
+        if (blocksPlacable == null || blocksPlacable.Count ==0) return false;
         _currentUnitJump = firstUnit;
         SwitchRayCastMode(RaycastMode.JUMP);
-        foreach (var block in blocksPlacedEmpty)
+        foreach (var block in blocksPlacable)
         {
             block.ActiveOutline(true);
         }
         return true;
 
     }
-    private void HandleCheckGameOver(Unit unit)
+    private void HandleUnitOndestination(Unit unit)
     {
         SetUnitOnDestination(unit);
         if (!CheckEndGame())  return;
         if (!CheckAllUnitOndestination()) return;
         GameOver();        
     }
-
     private void GameOver()
     {
         ClearAllRoom(_rooms, _architecture);
@@ -263,7 +265,7 @@ public class RoomSort2DGameManager : IDisposable
             Gateway gateWay = child.GetComponent<Gateway>();
             if (gateWay != null)
             {
-                gateWay.Init();
+                gateWay.Init(_injector);
                 gateWay.name = $"Gateway: {count}";
                 _gateWays.Add(gateWay);
                 gateWay.OnCompleteWay += HandleGateWayComplete;
@@ -411,9 +413,9 @@ public class RoomSort2DGameManager : IDisposable
                     unit.MoveTo(pathPositions, onDestination: true);
                     gateway.DequeueUnit();
                     gatewayCanUpdateQueue = true;
-                    DisPlaceBlockToCell(block);
                     AddUnitOnMoving(unit);
-                    unit.OnDestination += HandleCheckGameOver;
+                    RemoveBlockPlacable(block);
+                    unit.OnDestination += HandleUnitOndestination;
                     return true;
 
                 }
@@ -633,7 +635,11 @@ public class RoomSort2DGameManager : IDisposable
                 if (blockHit != null)
                 {
                     if (_currentUnitJump == null) return;
+                    List<Block> blocksPlacable = GetBlocksPlacable();
+                    blocksPlacable = blocksPlacable.Where(x => x.GetCodeName() == _currentUnitJump.GetCodeName()).ToList();
+                    if (!blocksPlacable.Contains(blockHit)) return;
                     if (blockHit.IsOccupier()) return;
+
                     blockHit.SetOccupier(_currentUnitJump);
                     _currentUnitJump.JumpTo(blockHit.transform.position);
                     foreach (var gateway in _gateWays)
@@ -650,13 +656,10 @@ public class RoomSort2DGameManager : IDisposable
                             }
                         }
                     }
-
-                    DisPlaceBlockToCell(blockHit);
+                    RemoveBlockPlacable(blockHit);
                     AddUnitOnMoving(_currentUnitJump);
-                    _currentUnitJump.OnDestination += HandleCheckGameOver;
-                    List<Block> blocksPlacedEmpty = GetBlockPlacedEmpty();
-                    
-                    foreach (var block in blocksPlacedEmpty)
+                    _currentUnitJump.OnDestination += HandleUnitOndestination;
+                    foreach (var block in blocksPlacable)
                     {
                         block.ActiveOutline(false);
                     }
@@ -674,7 +677,6 @@ public class RoomSort2DGameManager : IDisposable
         if (!room.GetMoveableState) return false;
         return true;
     }
-
     public void SetBlockRaycastToCell(Block blockRaycast, Cell cell)
     {
         if (!_blockRaycastedToCellDict.ContainsKey(blockRaycast)) return;
@@ -729,6 +731,14 @@ public class RoomSort2DGameManager : IDisposable
             _blockPlacedOnCell[block] = cell;
         }
     }
+    public void RemoveBlockPlacable(Block block)
+    {
+        if (_blockPlacedOnCell.ContainsKey(block))
+        {
+            Cell cell = _blockPlacedOnCell[block];
+            _blockPlacedOnCell.Remove(block);
+        }
+    }
     public void PlaceRooms(List<Room> rooms)
     {
         foreach (var room in rooms)
@@ -764,14 +774,6 @@ public class RoomSort2DGameManager : IDisposable
             
         }
     }
-    public void DisPlaceBlockToCell(Block block)
-    {
-        if (_blockPlacedOnCell.ContainsKey(block))
-        {
-            Cell cell = _blockPlacedOnCell[block];
-            _blockPlacedOnCell.Remove(block);    
-        }
-    }
     private void CheckSpawnRooms(Room targetRoom)
     {   
         Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
@@ -798,7 +800,7 @@ public class RoomSort2DGameManager : IDisposable
                 cell?.RemoveOccupier(block);
             }
             SetPlaceableCellCondition(cellValiableCondition);
-            DisPlaceBlockToCell(block);
+            RemoveBlockPlacable(block);
 
         }
     }
@@ -823,7 +825,6 @@ public class RoomSort2DGameManager : IDisposable
         cellPath = null;
         if (startCell.IsOccupier())
         {
-
             if (startCell.GetLastOccupier().GetCodeName() != codeName)
             {
                 return null;
@@ -954,10 +955,10 @@ public class RoomSort2DGameManager : IDisposable
             UnitQueueValiable = GameHelper.ShuffleQueue(UnitQueueValiable);
             //UnitQueueValiable = GetAllUnitSortedQueue(UnitQueueValiable);
 
-            List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-            if (blockPlacedEmpties.Count > 0)
+            List<Block> blocksPlacable = GetBlocksPlacable();
+            if (blocksPlacable.Count > 0)
             {
-                foreach (var block in blockPlacedEmpties)
+                foreach (var block in blocksPlacable)
                 {
                     Unit unitAlreadyHasCodename = UnitQueueValiable.FirstOrDefault(x => x.GetCodeName() == block.GetCodeName());
                     if (unitAlreadyHasCodename != null)
@@ -995,7 +996,6 @@ public class RoomSort2DGameManager : IDisposable
             }
         }
     }
-
     private void SpawnRoom(Room roomConfig, Vector3 point, Transform parent, System.Action<Room> action = null)
     {
         Room room = _gameView.SpawnRoom(roomConfig.gameObject, point, Quaternion.identity, parent);
@@ -1161,7 +1161,6 @@ public class RoomSort2DGameManager : IDisposable
             LoadLevel(level);
         }
     }
-
     private void LoadLevel(GameObject level)
     {
         if (level != null)
@@ -1206,9 +1205,13 @@ public class RoomSort2DGameManager : IDisposable
     }
     #endregion
     #region UNIT API
-    public List<Block> GetBlockPlacedEmpty()
+    public List<Block> GetBlocksPlacable()
     {
         return _blockPlacedOnCell.Keys.Where(x => !x.IsFullOccupier()).ToList();
+    }
+    public List<Cell> GetCellPlaced()
+    {
+        return _architecture.GetCells.Where(x => x.IsOccupier()).ToList();
     }
     public Queue<Unit> GetAllUnitQueue(List<Gateway> gateWays)
     {
@@ -1256,17 +1259,17 @@ public class RoomSort2DGameManager : IDisposable
     public int GetACount()
     {
         int unitCount = GetAllUnitQueueCount(_gateWays);
-        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-        if (blockPlacedEmpties == null) return 0;
-        int blockEmptyCount = blockPlacedEmpties.Count;
+        List<Block> blocksPlacable = GetBlocksPlacable();
+        if (blocksPlacable == null) return 0;
+        int blockEmptyCount = blocksPlacable.Count;
         int count = unitCount - blockEmptyCount;
         return count;
     }
     public int GetBCount()
     {
-        List<Block> blockPlacedEmpties = GetBlockPlacedEmpty();
-        if (blockPlacedEmpties == null) return 0;
-        int cellPlacableCount = _architecture.GetCells.Count - blockPlacedEmpties.Count;
+        List<Block> blocksPlacable = GetBlocksPlacable();
+        if (blocksPlacable == null) return 0;
+        int cellPlacableCount = _architecture.GetCells.Count - blocksPlacable.Count;
 
         return cellPlacableCount;
     }

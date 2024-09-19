@@ -65,7 +65,7 @@ public class RoomSpawnerManager
     {
         var _roomSpawnersSortBlockCount = _roomSpawners.Where(x => x.GetWeight > 0);
          _roomSpawnersSortBlockCount = _roomSpawnersSortBlockCount.OrderBy(x => x.GetBlockCount);
-        if(_roomSpawnersSortBlockCount != null)
+        if(_roomSpawnersSortBlockCount != null && _roomSpawnersSortBlockCount.Count() >0)
         {
             return _roomSpawnersSortBlockCount.First();
         }

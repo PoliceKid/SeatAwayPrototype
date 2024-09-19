@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using Injection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ public class Unit : MonoBehaviour, IOccupier
     public bool IsMoving = false;
     private UnitData _data;
     private GameObject _parent;
-
+    [Inject] private CoroutineHelper coroutineHelper;
     public void Init()
     {
         _data = new UnitData();
@@ -69,10 +70,10 @@ public class Unit : MonoBehaviour, IOccupier
         {
             if (_moveCoroutine != null)
             {
-                StopCoroutine(_moveCoroutine);
+                coroutineHelper.StopCoroutine(_moveCoroutine);
             }
-            if(gameObject.activeInHierarchy)
-            _moveCoroutine =StartCoroutine(StartMove(cellPositions, onDestination));
+            //if(gameObject.activeInHierarchy)
+            _moveCoroutine = coroutineHelper.StartCoroutine(StartMove(cellPositions, onDestination));
         }
     }
     IEnumerator StartMove(List<Vector3> cellPositions, bool onDestination = false)
@@ -81,7 +82,7 @@ public class Unit : MonoBehaviour, IOccupier
         while (currentCellIndex < cellPositions.Count)
         {
             Vector3 targetPosition = cellPositions[currentCellIndex];
-            while (Vector3.Distance(transform.position, targetPosition) > 0.01f)
+            while (Vector3.Distance(transform.position, targetPosition) > 0.05f)
             {
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, _moveSpeed * Time.deltaTime);
                 yield return null;
