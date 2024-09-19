@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityEditor;
 public class LevelContainer : MonoBehaviour
 {
     [SerializeField] Transform _architectureContainer;
@@ -9,6 +10,7 @@ public class LevelContainer : MonoBehaviour
     [SerializeField] Transform _roomStaticContainer;
     [SerializeField] Transform _gateWayContainer;
     [SerializeField] Transform _roomSpawnerPointContainer;
+    [SerializeField] Transform _unitCotainer;
     [SerializeField] int _lauchCount;
     [SerializeField] int _jumpCount;
     [SerializeField] int _minUnitCheckGameOver;
@@ -33,5 +35,13 @@ public class LevelContainer : MonoBehaviour
             return _roomSpawnerPoints;
         }
     }
-  
+    [ContextMenu("Test")]
+    public void TestCreateUnit()
+    {
+        foreach (Transform child in _unitCotainer)
+        {
+            Unit unit = child.GetComponent<Unit>();
+            Instantiate(unit, _unitCotainer);
+        }
+    }
 }

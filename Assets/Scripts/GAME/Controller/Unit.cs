@@ -126,7 +126,10 @@ public class Unit : MonoBehaviour, IOccupier
     }
 
     #endregion
-
+    public void AssignReder()
+    {
+        _renderer = transform.GetChild(0).GetChild(0).GetComponent<MeshRenderer>();
+    }
 
     [System.Serializable]
     public class UnitData
