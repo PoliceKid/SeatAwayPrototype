@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.Security.AccessControl;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 
 public class LevelEditorWindow : EditorWindow
 {
     public GameObject levelPrefab;  // Prefab level
     public GameObject unitPrefab;   // Prefab unit
+    public GameObject BlockPrefab;   // Prefab unit
     public string unitContainerName;  // Container trong prefab level để chứa các unit
     public string unitContainerNameClone;// Container trong prefab level để chứa các unit
     public int index = 0;
@@ -24,6 +26,7 @@ public class LevelEditorWindow : EditorWindow
 
         levelPrefab = (GameObject)EditorGUILayout.ObjectField("Level Prefab", levelPrefab, typeof(GameObject), false);
         unitPrefab = (GameObject)EditorGUILayout.ObjectField("Prefab", unitPrefab, typeof(GameObject), false);
+        BlockPrefab = (GameObject)EditorGUILayout.ObjectField("Block Prefab", BlockPrefab, typeof(GameObject), false);
         unitContainerName = EditorGUILayout.TextField("Container Name", unitContainerName);
         unitContainerNameClone = EditorGUILayout.TextField("Container Clone Name", unitContainerNameClone);
         index = EditorGUILayout.IntField("Container Clone Name", index);
@@ -55,14 +58,14 @@ public class LevelEditorWindow : EditorWindow
         }
 
         // Find the unit container in the prefab by name
-        Transform prefabUnitContainer = prefabRoot.transform.GetChild(index).GetChild(0).Find(unitContainerName);
+        Transform prefabUnitContainer = prefabRoot.transform.Find(unitContainerName);
         if (prefabUnitContainer == null)
         {
             Debug.LogError($"Unit Container '{unitContainerName}' not found in the prefab.");
             PrefabUtility.UnloadPrefabContents(prefabRoot);
             return;
         }
-        Transform prefabUnitContainerClone = prefabRoot.transform.GetChild(index).GetChild(0).Find(unitContainerNameClone);
+        Transform prefabUnitContainerClone = prefabRoot.transform.Find(unitContainerNameClone);
         if (prefabUnitContainerClone == null)
         {
             Debug.LogError($"Unit Container '{unitContainerName}' not found in the prefab.");
@@ -88,7 +91,10 @@ public class LevelEditorWindow : EditorWindow
             PrefabUtility.ConnectGameObjectToPrefab(sourceUnit, unitPrefab);
             // Copy all components
             CopyComponents(sourceUnitClone, sourceUnit);
-            sourceUnit.GetComponent<Unit>().AssignReder();
+
+            //sourceUnit.GetComponent<Unit>().AssignReder();
+            sourceUnit.GetComponent<Room>().EditorAssign();
+            CloneRoom(sourceUnitClone, sourceUnit);
             count++;
         }
 
@@ -114,6 +120,24 @@ public class LevelEditorWindow : EditorWindow
             }
 
             EditorUtility.CopySerialized(srcComponent, destComponent);
+        }
+    }
+    void CloneRoom(GameObject source, GameObject destination)
+    {
+         int sourcBlockCount = source.transform.GetChild(0).childCount -1;
+        for (int i = 0; i < sourcBlockCount; i++)
+        { 
+            GameObject newUnit = (GameObject)PrefabUtility.InstantiatePrefab(BlockPrefab, destination.transform.GetChild(0));
+        }
+        sourcBlockCount += 1;
+        for (int i = 0; i < sourcBlockCount; i++)
+        {
+           Transform sourceUnit = source.transform.GetChild(0).GetChild(i);
+           Transform destinationUnit = destination.transform.GetChild(0).GetChild(i);
+
+            destinationUnit.transform.localPosition = sourceUnit.transform.localPosition;
+            destinationUnit.transform.localRotation = sourceUnit.transform.localRotation;
+            destinationUnit.GetComponent<Block>().EditorCodenameType(destinationUnit.GetComponent<Block>().GetCodeNameType);
         }
     }
 }

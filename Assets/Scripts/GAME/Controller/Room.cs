@@ -184,6 +184,12 @@ public class Room : MonoBehaviour
     {
         return _data.IsCompelete;
     }
+    public void EditorAssign()
+    {
+        _BlockContainer = transform.GetChild(0);
+        _sortingGroup = transform.GetComponent<SortingGroup>();
+    }
+   
     #region PLACEABLE STATE
     // this state is config
     public bool GetMoveableState => _canMoveableState;

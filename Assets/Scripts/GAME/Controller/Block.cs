@@ -250,8 +250,12 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
     {
         _parent = null;
     }
+    public void EditorCodenameType(CodeNameType codeNameType)
+    {
+        _codeNameType = codeNameType;
+    }
+    public CodeNameType GetCodeNameType => _codeNameType;
 
- 
     #endregion
 
 
