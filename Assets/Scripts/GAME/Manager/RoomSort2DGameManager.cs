@@ -677,7 +677,8 @@ public class RoomSort2DGameManager : IDisposable
         }
         _blockRaycastings = _roomRaycastCheck.GetBlockRaycasting();
         _roomRaycastCheck.AssigRoomPoint(pivotBlock.transform.position);
-        Vector3 offSet = pivotBlock.transform.position - _roomRaycastCheck.RoomGO.transform.position;
+        //Vector3 offSet = pivotBlock.transform.position - _roomRaycastCheck.RoomGO.transform.position;
+        Vector3 offSet = pivotBlock.transform.localPosition;
         List<Cell> cells = architecture.GetCells;
 
         if (_blockRaycastings != null)

@@ -160,13 +160,23 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         _outline.gameObject.SetActive(isActive);
         if (isActive)
         {
-            _tween = DotweenAnimationHelper.AnimationScaleLoop(_outline.gameObject, 0.8f, 0.5f);
+            if (_tween == null)
+            {
+                _tween = DotweenAnimationHelper.AnimationScaleLoop(_outline.gameObject, 0.8f, 0.5f);
+
+            }
+            if (!_tween.IsPlaying())
+            {
+                _tween.Play();
+
+            }
+
         }
         else
         {
             if (_tween != null)
             {
-                _tween.Kill();
+                _tween.Pause();
             }
         }
     }

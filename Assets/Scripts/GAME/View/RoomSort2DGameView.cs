@@ -135,14 +135,23 @@ public class RoomSort2DGameView : MonoBehaviour
         _warningImage.gameObject.SetActive(isActive);
         if (isActive)
         {
-            _tween = DotweenAnimationHelper.AnimationScaleLoop(_warningImage.gameObject, 0.8f, 0.5f);
+            if(_tween == null)
+            {
+                _tween = DotweenAnimationHelper.AnimationScaleLoop(_warningImage.gameObject, 0.8f, 0.5f);
 
+            }
+            if (!_tween.IsPlaying())
+            {
+                _tween.Play();
+
+            }
+            
         }
         else
         {
             if(_tween != null)
             {
-                _tween.Kill();
+                _tween.Pause();
             }
         }
     }
