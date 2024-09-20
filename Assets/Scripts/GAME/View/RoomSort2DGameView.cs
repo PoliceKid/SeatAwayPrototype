@@ -16,6 +16,7 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _JumpCountText;
     [SerializeField] private TextMeshProUGUI _unitCountOverView;
     [SerializeField] private TextMeshProUGUI _unitWinCondition;
+    [SerializeField] private TextMeshProUGUI _timerWaitingText;
     [SerializeField] private Image _warningImage;
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
@@ -128,6 +129,16 @@ public class RoomSort2DGameView : MonoBehaviour
         {
             HandleUpdateUnitOverviewText(totalComplete, initTotalUnit);
         };
+    }
+    public void HandleUpdateTimer(float timerWaiting)
+    {
+        if (timerWaiting <= -1)
+        {
+            UpdateText(_timerWaitingText, $" ");
+            return;
+        }
+        int roundedTimerWaiting = (int)Math.Floor(timerWaiting);
+        UpdateText(_timerWaitingText, $"{roundedTimerWaiting}");
     }
     Tween _tween;
     public void HandleShowWarning(bool isActive)

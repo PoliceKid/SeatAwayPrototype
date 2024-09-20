@@ -38,6 +38,7 @@ public class RoomSort2DGameManager : IDisposable
     public static System.Action<int> _checkJumpResult = delegate { };
     public static System.Action<int, int> _OnUnitQueueUpdate = delegate { };
     public static System.Action<bool> _OnStuckRoom = delegate { };
+    public static System.Action<float> _OnStartTimer = delegate { };
     private int _lauchCount;
     private int _jumpCount;
     private bool hasInit;
@@ -71,6 +72,8 @@ public class RoomSort2DGameManager : IDisposable
         _OnUnitQueueUpdate += _gameView.HandleUpdateUnitOverviewText;
         _checkJumpResult += _gameView.HandleUpdateJumpCount;
         _OnStuckRoom += _gameView.HandleShowWarning;
+        _OnStuckRoom += StartWaitingTimer;
+        _OnStartTimer += _gameView.HandleUpdateTimer;
         hasInit = true;
 
     }
@@ -89,7 +92,9 @@ public class RoomSort2DGameManager : IDisposable
                 CheckRaycast();
                 break;
         }
+        HandleTimer();
     }
+
     private void FixedTick()
     {
 
@@ -125,9 +130,9 @@ public class RoomSort2DGameManager : IDisposable
     }
     private bool CheckEndGame()
     {
+        if (!CheckAllUnitOndestination()) return false;
         int count = GetAllUnitQueueCount(_gateWays);
         if (count <= 0) return true;
-        if (_lauchCount <= 0) return true;
 
         return false;
     }
@@ -561,6 +566,49 @@ public class RoomSort2DGameManager : IDisposable
         }
         return true;
     }
+    float _timerStuck;
+    float _timerWaiting;
+    private void HandleTimer()
+    {
+        if (_timerWaiting <= 1 && _timerStuck <= 1) return;
+        _timerWaiting -= Time.deltaTime;
+
+        if (_timerWaiting >= 1)
+        {
+            _OnStartTimer?.Invoke(_timerWaiting);
+        }
+
+        if (_timerWaiting < 1)
+        {
+            _timerStuck -= Time.deltaTime;
+            _OnStartTimer?.Invoke(_timerStuck);
+
+            if (_timerStuck <= 1)
+            {
+                _OnStartTimer?.Invoke(-1);
+
+                GameEnd();
+
+            }
+        }
+    }
+    private void StartWaitingTimer(bool state)
+    {
+
+        if (state)
+        {
+            if (_timerStuck > 1 && _timerWaiting > 1) return;
+            _timerWaiting = 6f;
+            _timerStuck = 11f;
+        }
+        else
+        {
+            _timerStuck = 0;
+            _timerWaiting = 0;
+            _OnStartTimer?.Invoke(-1);
+
+        }
+    }
     #endregion
     #region ROOM API
     public void PlaceBlockRaycastedToCell(Room room, Dictionary<Block, Cell> _blockCheckRaycastDict)
@@ -712,7 +760,7 @@ public class RoomSort2DGameManager : IDisposable
                     return true;
                 }
             }
-        
+
         }
 
         return false;
@@ -836,7 +884,7 @@ public class RoomSort2DGameManager : IDisposable
             if (CheckEndGame()) return false;
             return true;
         }
-        return false;   
+        return false;
     }
     private void RemoveRoomSpawner(Room targetRoom)
     {
@@ -862,7 +910,7 @@ public class RoomSort2DGameManager : IDisposable
                 return;
             }
         }
-         _OnStuckRoom.Invoke(true);
+        _OnStuckRoom.Invoke(true);
     }
     public bool SpawnRooms(RoomSpawnerManager roomSpawnerManager, Transform[] spawnerPoints, Transform parent, int countA, int countB, Queue<Unit> UnitQueueValiable)
     {
@@ -949,7 +997,8 @@ public class RoomSort2DGameManager : IDisposable
                         room.SetId(room.GetId() + "_" + Guid.NewGuid().ToString());
                         room.gameObject.SetActive(true);
                         room.SetMoveableState(true);
-                        if (!_roomSpawner.ContainsKey(point)){
+                        if (!_roomSpawner.ContainsKey(point))
+                        {
                             _roomSpawner.Add(point, room);
 
                         }
@@ -1297,16 +1346,7 @@ public class RoomSort2DGameManager : IDisposable
         if (result)
         {
             _lauchCount--;
-            if (_lauchCount <= 0)
-            {
-                if (CheckAllUnitOndestination())
-                {
-                    GameEnd();
-                }
-            }
-
             return _lauchCount;
-
         }
         else
         {
@@ -1327,10 +1367,6 @@ public class RoomSort2DGameManager : IDisposable
         if (result)
         {
             _lauchCount--;
-            if (CheckEndGame())
-            {
-                GameEnd();
-            }
             return _lauchCount;
         }
         else
