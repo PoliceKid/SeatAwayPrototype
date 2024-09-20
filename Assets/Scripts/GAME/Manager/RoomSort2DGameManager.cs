@@ -449,7 +449,6 @@ public class RoomSort2DGameManager : IDisposable
 
                 PlaceBlockRaycastedToCell(_currentRoomInteract, _blockRaycastedToCellDict);
                 RemoveRoomSpawner(_currentRoomInteract);
-                CheckStuckRoom();
                 if (CheckSpawnRooms())
                 {
                     bool spawnSuccess = SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
@@ -460,7 +459,7 @@ public class RoomSort2DGameManager : IDisposable
                 }
                 else
                 {
-                   
+                    CheckStuckRoom();
                 }
                 SaveRoom(_currentRoomInteract);
             }
