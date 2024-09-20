@@ -15,6 +15,8 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     [SerializeField] GameObject _wallRight;
     [SerializeField] GameObject _wallTop;
     [SerializeField] GameObject _wallBottom;
+    [SerializeField] Material _initMat;
+    [SerializeField] Material _placableMat;
     #endregion
     #region CURRENT DATA
     //Current data
@@ -274,15 +276,15 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     #region VISUAL
     public void OnPlaceable(bool isPlaceable)
     {
-        ChangeMaterialColor(isPlaceable ? Color.green : initColor);
+        ChangeMaterialColor(isPlaceable ? _placableMat : _initMat);
     }
 
-    public void ChangeMaterialColor(Color newColor)
+    public void ChangeMaterialColor(Material mat)
     {
         if (_renderer != null)
         {
-            _renderer.material.color = newColor;
-        }
+            _renderer.material = mat;
+        }   
         else
         {
             Debug.LogError("Material is not assigned in the inspector.");
