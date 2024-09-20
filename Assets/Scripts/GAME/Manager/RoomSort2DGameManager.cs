@@ -13,14 +13,15 @@ public class RoomSort2DGameManager : IDisposable
     [Inject] private Injector _injector;
     [Inject] private Context _context;
     [Inject] private Timer _timer;
-    [Inject] private PathFindingService _pathFindingService;
     [Inject] private CoroutineHelper _coroutineHelper;
     private RoomSort2DGameView _gameView;
     public SaveGameSystem SaveGameSystem;
+    private PathFindingService _pathFindingService;
+
     public RoomSort2DGameManager(RoomSort2DGameView gameView)
     {
         _gameView = gameView;
-     
+  
     }
     private List<Room> _rooms;
     private Room _currentRoomInteract;
@@ -55,6 +56,9 @@ public class RoomSort2DGameManager : IDisposable
             SaveGameSystem = new SaveGameSystem();
             SaveGameSystem.Load();
             _context.Install(SaveGameSystem);
+            _pathFindingService = new PathFindingService(_gameView.GetBlockDirPathFinding);
+            _context.Install(_pathFindingService);
+            _context.ApplyInstall();
             _stageManager = new StageManager();
             LoadInitialLevel(_stageManager);
             //GameObject roomGO = new GameObject("Room GO");

@@ -18,14 +18,14 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
-
+    [SerializeField] private bool _blockDirPathFinding;
     public Camera GetMainCam => _mainCam;
     public LayerMask GetBlockLayerMask => _blockLayerMask;
     public LayerMask GetCellLayerMask => _cellLayerMask;
     public Transform GetLevelContainer => _levelContainer;
     public Button GetLauchBtn => _launchBtn;
     public GameObject GetGameOverPopup => _gameOverPopup;
-
+    public bool GetBlockDirPathFinding => _blockDirPathFinding;
     public TextMeshProUGUI JumpCountText => _JumpCountText;
     public void Init()
     {

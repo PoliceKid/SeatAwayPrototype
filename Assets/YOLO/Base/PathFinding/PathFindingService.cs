@@ -6,6 +6,10 @@ using UnityEngine;
 
 public class PathFindingService 
 {
+    private bool _blockDirPathFinding;
+    public PathFindingService(bool blockDirPathFinding) {
+        _blockDirPathFinding = blockDirPathFinding;
+    }
     public List<Cell> FindPath(Cell startCell, Cell destinationCell)
     {
         
@@ -37,7 +41,10 @@ public class PathFindingService
                     {
                         continue;
                     }
-                    if (neighbor == destinationCell && dir == neighbor.GetLastOccupier().GetDirection()) continue;
+                    if (_blockDirPathFinding)
+                    {
+                        if (neighbor == destinationCell && dir == neighbor.GetLastOccupier().GetDirection()) continue;
+                    }
                 }
                 float newCost = current.cost + Vector3.Distance(current.cell.transform.localPosition, neighbor.transform.localPosition);
                 if (!cellNodes.TryGetValue(neighbor, out CellNode neighborNode) || newCost < neighborNode.cost)
