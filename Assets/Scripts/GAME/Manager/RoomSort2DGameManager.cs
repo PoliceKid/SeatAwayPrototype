@@ -41,6 +41,7 @@ public class RoomSort2DGameManager : IDisposable
     private bool hasInit;
     private int _initTotalUnit;
     private int _totalUnitComplete;
+    private int _minMinWinCondition;
     private RaycastMode _raycastMode;
 
     #endregion
@@ -181,7 +182,7 @@ public class RoomSort2DGameManager : IDisposable
     {
         int count = GetAllUnitQueueCount(_gateWays);
         if (count <= 0) return true;
-        if(count <= _levelContainer.GetMinUnitCheckGameOver)
+        if(count <= _minMinWinCondition)
         {
             return true;
         }
@@ -216,16 +217,19 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
-    private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int jumpCount)
+    private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int jumpCount, int minUnitWinCondition)
     {
         _lauchCount = launchCount;
         _jumpCount = jumpCount;
+        _minMinWinCondition = minUnitWinCondition;
         _initTotalUnit = GetAllUnitQueueCount(_gateWays);
         _gameView.InitlaunchButton(_lauchCount, HandleLauch);
         _gameView.InitlaunchAllButton(_lauchCount, HandleLauchAll);
         _gameView.InitJumplButton(_jumpCount, _checkJumpResult, HandleJump);
-       
+        _gameView.InitMinUnitWinCondition(_minMinWinCondition);
+        //_gameView.InitEventUpdateUnitOverviewText(_OnUnitQueueUpdate);
         _OnUnitQueueUpdate += _gameView.HandleUpdateUnitOverviewText;
+        _checkJumpResult += _gameView.HandleUpdateJumpCount;
         _totalUnitComplete = 0;
         _OnUnitQueueUpdate?.Invoke(_totalUnitComplete, _initTotalUnit);
         if (_roomStatics.Count > 0)
@@ -1186,7 +1190,10 @@ public class RoomSort2DGameManager : IDisposable
                 if (SaveGameSystem.GetGameData.RoomPlacedSaveGames == null)
                 {
                     //SaveGameSystem.GetGameData.RoomPlacedSaveGames = new List<RoomSaveGame>();
-                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints, levelContainer.GetLauchCount, levelContainer.GetJumpCount);
+                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer,
+                        levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer,
+                        levelContainer.GetRoomSpawnerPoints,
+                        levelContainer.GetLauchCount, levelContainer.GetJumpCount,levelContainer.GetMinUnitWinCondition);
 
                 }
                 else

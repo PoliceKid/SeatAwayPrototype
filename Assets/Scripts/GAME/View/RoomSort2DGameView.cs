@@ -86,9 +86,9 @@ public class RoomSort2DGameView : MonoBehaviour
     public void InitJumplButton(int initJumpCount,System.Action<int> checkJumpResult, System.Func<bool> performAction = null)
     {
         UpdateText(_JumpCountText, $"Jump x{initJumpCount.ToString()}");
-        checkJumpResult = (result) => { 
-            UpdateText(_JumpCountText, $"Jump x{result.ToString()}"); 
-        };
+        //checkJumpResult = (result) => { 
+        //    UpdateText(_JumpCountText, $"Jump x{result.ToString()}"); 
+        //};
         _jumpBtn.onClick.RemoveAllListeners();
         _jumpBtn.onClick.AddListener(() =>
         {
@@ -104,12 +104,27 @@ public class RoomSort2DGameView : MonoBehaviour
             }
         });
     }
+    public void InitMinUnitWinCondition(int initMinUnit)
+    {
+        UpdateText(_unitWinCondition, $"Min Unit: {initMinUnit}");
+    }
     public void UpdateText(TextMeshProUGUI text,string result)
     {
         text.text = result;
-    }   
+    }
+    public void HandleUpdateJumpCount(int jumpCount)
+    {
+        UpdateText(_JumpCountText, $"Jump x{jumpCount.ToString()}");
+    }
     public void HandleUpdateUnitOverviewText(int totalUnitComplete,int initTotalUnit)
     {
         UpdateText(_unitCountOverView, $"Unit: {totalUnitComplete}/{initTotalUnit}");
+    }
+    public void InitEventUpdateUnitOverviewText(System.Action<int, int> _OnUnitQueueUpdate)
+    {
+        _OnUnitQueueUpdate += (totalComplete, initTotalUnit) =>
+        {
+            HandleUpdateUnitOverviewText(totalComplete, initTotalUnit);
+        };
     }
 }

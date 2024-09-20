@@ -20,7 +20,7 @@ public class LevelContainer : MonoBehaviour
     public Transform GetGateWayContainer=> _gateWayContainer;
     public int GetLauchCount => _lauchCount;
     public int GetJumpCount => _jumpCount;
-    public int GetMinUnitCheckGameOver => _minUnitCheckGameOver;
+    public int GetMinUnitWinCondition => _minUnitCheckGameOver;
     public Transform[] GetRoomSpawnerPoints
     {
         get
