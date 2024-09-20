@@ -176,7 +176,6 @@ public class Cell :MonoBehaviour, IOccupierContainer<IOccupier>
     public void SetCurrentBlockRaycast(IOccupier currentOccupierRaycast)
     {
         _currentOccupierRaycast = currentOccupierRaycast;
-        Debug.Log("Current occupier raycast: " + _currentOccupierRaycast);
     }
 
     #region IMPLEMENTATION INTERFACE

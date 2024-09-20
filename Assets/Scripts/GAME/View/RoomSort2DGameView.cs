@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 public class RoomSort2DGameView : MonoBehaviour
 {
     [SerializeField] private Camera _mainCam;
@@ -15,6 +16,7 @@ public class RoomSort2DGameView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _JumpCountText;
     [SerializeField] private TextMeshProUGUI _unitCountOverView;
     [SerializeField] private TextMeshProUGUI _unitWinCondition;
+    [SerializeField] private Image _warningImage;
     [SerializeField] GameObject _gameOverPopup;
     [SerializeField] LayerMask _blockLayerMask;
     [SerializeField] LayerMask _cellLayerMask;
@@ -126,5 +128,22 @@ public class RoomSort2DGameView : MonoBehaviour
         {
             HandleUpdateUnitOverviewText(totalComplete, initTotalUnit);
         };
+    }
+    Tween _tween;
+    public void HandleShowWarning(bool isActive)
+    {
+        _warningImage.gameObject.SetActive(isActive);
+        if (isActive)
+        {
+            _tween = DotweenAnimationHelper.AnimationScaleLoop(_warningImage.gameObject, 0.8f, 0.5f);
+
+        }
+        else
+        {
+            if(_tween != null)
+            {
+                _tween.Kill();
+            }
+        }
     }
 }

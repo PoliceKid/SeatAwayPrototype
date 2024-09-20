@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System;
+using DG.Tweening;
 
 public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
 {
@@ -152,9 +153,22 @@ public class Block : MonoBehaviour, IOccupier, IOccupierContainer<IOccupier>
         _spRd.color = !isPlaceable?Color.red: initColor;
         validPlacable = isPlaceable;
     }
+    Tween _tween;
+
     public void ActiveOutline(bool isActive)
     {
         _outline.gameObject.SetActive(isActive);
+        if (isActive)
+        {
+            _tween = DotweenAnimationHelper.AnimationScaleLoop(_outline.gameObject, 0.8f, 0.5f);
+        }
+        else
+        {
+            if (_tween != null)
+            {
+                _tween.Kill();
+            }
+        }
     }
     private bool validPlacable;
     public bool ValidPlaceable => validPlacable;
