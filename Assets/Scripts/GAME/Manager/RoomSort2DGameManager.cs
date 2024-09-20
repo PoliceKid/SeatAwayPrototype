@@ -69,132 +69,6 @@ public class RoomSort2DGameManager : IDisposable
         hasInit = true;
 
     }
-    private int HandleLauch()
-    {
-        if (_lauchCount <= 0) {
-          
-            return -1;
-        }
-        bool result = false;
-        foreach (var room in _rooms.ToList())
-        {
-            if (room.IsComplete())
-            {
-                result = true;
-                room.OnComplete();
-                HandleCompleteRoom(room);
-            }
-        }
-        if (result)
-        {
-            _lauchCount--;
-            if (_lauchCount <=0)
-            {
-                if (CheckAllUnitOndestination())
-                {
-                    GameOver();
-                }
-            }
-            return _lauchCount;
-
-        }
-        else
-        {
-            return -1;
-        }
-    }
-    private int HandleLauchAll()
-    {
-        if (_lauchCount <= 0)
-        {
-            return -1;
-        }
-        List<Cell> cellsPlacable = GetCellPlaced();
-        if(cellsPlacable.Count ==0) return -1;
-        if (!CheckAllUnitOndestination()) return -1;
-        bool result = true;       
-        ClearAllRoom(_rooms,_architecture);
-        if (result)
-        {
-            _lauchCount--;
-            if (CheckEndGame())
-            {
-                GameOver();
-            }    
-            return _lauchCount;
-        }
-        else
-        {
-            return -1;
-        }
-    }
-    private bool HandleJump()
-    {
-        if (_jumpCount <= 0)
-        {
-            return false;
-        }
-        Queue<Unit> unitQueue = GetAllUnitQueue(_gateWays);
-        if (unitQueue == null) return false;
-        Unit firstUnit = unitQueue.Dequeue();
-        if (firstUnit == null) return false;
-
-        List<Block> blocksPlacable = GetBlocksPlacable();
-        blocksPlacable = blocksPlacable.Where(x => x.GetCodeName() == firstUnit.GetCodeName()).ToList();
-
-        if (blocksPlacable == null || blocksPlacable.Count ==0) return false;
-        _currentUnitJump = firstUnit;
-        SwitchRayCastMode(RaycastMode.JUMP);
-        foreach (var block in blocksPlacable)
-        {
-            block.ActiveOutline(true);
-        }
-        return true;
-
-    }
-    private void HandleUnitOndestination(Unit unit)
-    {
-        SetUnitOnDestination(unit);
-        if (!CheckEndGame())  return;
-        if (!CheckAllUnitOndestination()) return;
-        GameOver();        
-    }
-    private void GameOver()
-    {
-        ClearAllRoom(_rooms, _architecture);
-        if (CheckGameResult())
-        {
-            //Game win
-            GameWin();
-        }
-        else
-        {
-            //Game lose
-            Debug.Log("Game Over");
-            _gameView.GetGameOverPopup.SetActive(true);
-        }
-    }
-    private bool CheckEndGame()
-    {
-        int count = GetAllUnitQueueCount(_gateWays);
-        if (count <= 0) return true;
-        if (_lauchCount <= 0) return true;
-
-        return false;
-    }
-    private bool CheckGameResult()
-    {
-        int count = GetAllUnitQueueCount(_gateWays);
-        if (count <= 0) return true;
-        if(count <= _minMinWinCondition)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
     private void PostTick()
     {
         if (!hasInit) return;
@@ -221,6 +95,48 @@ public class RoomSort2DGameManager : IDisposable
         _timer.POST_TICK -= PostTick;
         _timer.FIXED_TICK -= FixedTick;
     }
+    private void GameEnd()
+    {
+        ClearAllRoom(_rooms, _architecture);
+        if (CheckGameResult())
+        {
+            //Game win
+            GameWin();
+        }
+        else
+        {
+            //Game lose
+            Debug.Log("Game Over");
+            _gameView.GetGameOverPopup.SetActive(true);
+        }
+    }
+    private void GameWin()
+    {
+        Debug.Log("Game WINN");
+        OnLevelComplete();
+    }
+    private bool CheckEndGame()
+    {
+        int count = GetAllUnitQueueCount(_gateWays);
+        if (count <= 0) return true;
+        if (_lauchCount <= 0) return true;
+
+        return false;
+    }
+    private bool CheckGameResult()
+    {
+        int count = GetAllUnitQueueCount(_gateWays);
+        if (count <= 0) return true;
+        if (count <= _minMinWinCondition)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    List<Room> _roomStatics;
     private void InitRoomFromView(Transform roomConfigCotainer, Transform roomStaticCotainer, Transform architectureContainer, Transform gateWayContainer, Transform[] roomSpawnerPoints,int launchCount, int jumpCount, int minUnitWinCondition)
     {
         _lauchCount = launchCount;
@@ -275,7 +191,6 @@ public class RoomSort2DGameManager : IDisposable
                 });
         }
     }
-    List<Room> _roomStatics;
     private void InitGateWayFromView(Transform gateWayContainer)
     {
         _gateWays = new List<Gateway>();
@@ -375,80 +290,6 @@ public class RoomSort2DGameManager : IDisposable
     {
         _unitOnDestinationDict = new Dictionary<Unit, bool>();
     }
-    public void AddUnitOnMoving(Unit unit)
-    {
-        if (!_unitOnDestinationDict.ContainsKey(unit))
-        {
-            _unitOnDestinationDict.Add(unit, false);
-
-        }
-        else
-        {
-            _unitOnDestinationDict[unit] = false;
-        }
-    }
-    public void SetUnitOnDestination(Unit unit)
-    {
-        if (!_unitOnDestinationDict.ContainsKey(unit)) return;
-        _unitOnDestinationDict[unit] = true;
-    }
-    public bool CheckAllUnitOndestination()
-    {
-        return _unitOnDestinationDict.All(x => x.Value == true);
-    }
-    private void HandleCompleteRoom( Room room)
-    {
-        List<Block> blocks = room.GetBlocks;
-        if (blocks == null) return;
-        foreach (var block in blocks)
-        {
-            Cell cellConaintBlock = _architecture.GetCells.FirstOrDefault(x => x.GetOccupier().Contains(block));
-
-            if (cellConaintBlock != null)
-            {
-                cellConaintBlock.ClearOccupiers();
-            }
-        }
-        CheckUnitMoveToBlock(_gateWays);
-        if (_rooms.Contains(room)){
-            _rooms.Remove(room);
-        }
-    }
-    private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
-    {
-        foreach (var gateway in _gateWays)
-        {
-            bool canDequeueUnit = false;
-            gateway.DequeueUnitLoop((unit) =>
-            {
-
-                if (unit != null)
-                {
-                    Block block = GetBlockValiable(gateway.GetConnectedCell, gateway.GetDirection(), unit.GetOccupierType(), out List<Cell> cellPath);
-                    if (block == null)
-                    {
-                        return false;
-                    }
-                    canDequeueUnit = true;
-                    block.SetOccupier(unit);
-                    List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
-                    unit.MoveTo(pathPositions, onDestination: true);
-                    DequeueUnit(gateway);
-                    AddUnitOnMoving(unit);
-                    unit.OnDestination += HandleUnitOndestination;
-                    return true;
-
-                }
-                return false;
-            });
-            if (canDequeueUnit)
-            {
-                gateway.UpdateUnitQueuePosition();
-            }
-
-        }
-
-    }
     private void InitArchitectureFromView(Transform architectureContainer)
     {
         foreach (Transform child in architectureContainer)
@@ -462,38 +303,14 @@ public class RoomSort2DGameManager : IDisposable
         }
         InitNeighborCellArchitecture(_architecture);
     }
-    private void HandleGateWayComplete()
-    {
-    }
-    private void GameWin()
-    {
-        Debug.Log("Game WINN");
-        OnLevelComplete();
-    }
 #endregion
     #region UPDATE BEHAVIOUR
-    public List<Block> GetlistBlock(Room targetRoom)
-    {
-        if (targetRoom == null) return null;
-        return targetRoom.GetBlocks;
-    }
-    private void InitBlockRaycastToCell(List<Block> blocks)
-    {
-        _blockRaycastedToCellDict = new Dictionary<Block, Cell>();
-        if (blocks == null) return;
-        foreach (var item in blocks)
-        {
-            if (!_blockRaycastedToCellDict.ContainsKey(item))
-            {
-                _blockRaycastedToCellDict.Add(item, null);
-            }
-        }
-    }
     #region RAYCAST PROPERTIES
     Vector3 clickOffset;
     private RaycastHit[] _raycastHits = new RaycastHit[1];
     private bool _isValidPlace;
     List<Block> blocks;
+    Unit _currentUnitJump;
     //List<BlockRaycast> blockRaycastings;
     #endregion
     private void CheckRaycast()
@@ -512,7 +329,7 @@ public class RoomSort2DGameManager : IDisposable
                     var room = blockHit.GetData.initParent.GetComponent<Room>();
                     if (room != null)
                     {
-                        if(!CheckMoveble(room)) return;
+                        if(!CheckRoomMoveble(room)) return;
 
                         //Offset
                         Vector3 worldPosition = _gameView.GetMainCam.ScreenToWorldPoint(mousePosition);
@@ -641,8 +458,6 @@ public class RoomSort2DGameManager : IDisposable
             //_roomRaycastCheck.ClearRaycast();
         }
     }
-    Unit _currentUnitJump;
-
     private void CheckRaycastJump()
     {
         if (Input.GetMouseButtonUp(0))
@@ -692,11 +507,21 @@ public class RoomSort2DGameManager : IDisposable
             }
         }
     }
-    private bool CheckMoveble(Room room)
+    public void SwitchRayCastMode(RaycastMode newRayCastMode)
     {
-        if (room.GetPlaceableState == PlaceableState.Freeze) return false;
-        if (!room.GetMoveableState) return false;
-        return true;
+        _raycastMode = newRayCastMode;
+    }
+    private void InitBlockRaycastToCell(List<Block> blocks)
+    {
+        _blockRaycastedToCellDict = new Dictionary<Block, Cell>();
+        if (blocks == null) return;
+        foreach (var item in blocks)
+        {
+            if (!_blockRaycastedToCellDict.ContainsKey(item))
+            {
+                _blockRaycastedToCellDict.Add(item, null);
+            }
+        }
     }
     public void SetBlockRaycastToCell(Block blockRaycast, Cell cell)
     {
@@ -795,19 +620,26 @@ public class RoomSort2DGameManager : IDisposable
             
         }
     }
-    private void CheckSpawnRooms(Room targetRoom)
-    {   
-        Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
-        if (currentRoomSpawnerPoint != null)
+    private void HandleCompleteRoom(Room room)
+    {
+        List<Block> blocks = room.GetBlocks;
+        if (blocks == null) return;
+        foreach (var block in blocks)
         {
-            _roomSpawner[currentRoomSpawnerPoint] = null;
+            Cell cellConaintBlock = _architecture.GetCells.FirstOrDefault(x => x.GetOccupier().Contains(block));
 
-            if (_roomSpawner.All(x => x.Value == null))
+            if (cellConaintBlock != null)
             {
-                if (CheckEndGame()) return;
-                SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
+                cellConaintBlock.ClearOccupiers();
             }
         }
+        room.OnComplete();
+        CheckUnitMoveToBlock(_gateWays);
+        if (_rooms.Contains(room))
+        {
+            _rooms.Remove(room);
+        }
+
     }
     private void ClearRoomOccupier(Room targetRoom, Architecture _architecture)
     {
@@ -841,6 +673,18 @@ public class RoomSort2DGameManager : IDisposable
             }
         }
         _blockPlacedOnCell.Clear();
+        _rooms.Clear();
+    }
+    private bool CheckRoomMoveble(Room room)
+    {
+        if (room.GetPlaceableState == PlaceableState.Freeze) return false;
+        if (!room.GetMoveableState) return false;
+        return true;
+    }
+    public List<Block> GetlistBlock(Room targetRoom)
+    {
+        if (targetRoom == null) return null;
+        return targetRoom.GetBlocks;
     }
     public Block GetBlockValiable(Cell startCell, Vector3 direction, string codeName, out List<Cell> cellPath)
     {
@@ -907,12 +751,21 @@ public class RoomSort2DGameManager : IDisposable
 
         return neighbors;
     }
-    public void SwitchRayCastMode(RaycastMode newRayCastMode)
+    #region SPAWN ROOM
+    private void CheckSpawnRooms(Room targetRoom)
     {
-        _raycastMode = newRayCastMode;
+        Vector3 currentRoomSpawnerPoint = _roomSpawner.FirstOrDefault(x => x.Value == _currentRoomInteract).Key;
+        if (currentRoomSpawnerPoint != null)
+        {
+            _roomSpawner[currentRoomSpawnerPoint] = null;
+
+            if (_roomSpawner.All(x => x.Value == null))
+            {
+                if (CheckEndGame()) return;
+                SpawnRooms(_roomSpawnerManager, _levelContainer.GetRoomSpawnerPoints, _levelContainer.GetRoomConfigContainer, GetACount(), GetBCount(), GetAllUnitQueue(_gateWays));
+            }
+        }
     }
-    #endregion
-    #region SPAWN
     public void SpawnRooms(RoomSpawnerManager roomSpawnerManager, Transform[] spawnerPoints, Transform parent, int countA, int countB, Queue<Unit> UnitQueueValiable)
     {
         _roomSpawner.Clear();
@@ -1025,6 +878,7 @@ public class RoomSort2DGameManager : IDisposable
             action?.Invoke(room);
         }
     }
+    #endregion 
     #endregion
     #region ARCHITECTURE API
     #region NEIGHBOR 
@@ -1171,62 +1025,62 @@ public class RoomSort2DGameManager : IDisposable
     }
     #endregion
     #endregion
-    #region STAGE API
-    public void LoadInitialLevel(StageManager stageManager)
-    {
-        GameObject level = stageManager.GetCurrentLevelPrefab();
-        if (level != null)
-        {
-            LoadLevel(level);
-        }
-    }
-    private void LoadLevel(GameObject level)
-    {
-        if (level != null)
-        {
-            LevelContainer levelContainer = _gameView.SpawnLevel(level, Vector3.zero, Quaternion.identity);
-
-            if (levelContainer != null)
-            {
-                _levelContainer = levelContainer;
-                 InitLevel(levelContainer.GetRoomConfigContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer,levelContainer.GetRoomSpawnerPoints, levelContainer.GetRoomStaticContainer);
-                //Save Game
-                if (SaveGameSystem.GetGameData.RoomPlacedSaveGames == null)
-                {
-                    //SaveGameSystem.GetGameData.RoomPlacedSaveGames = new List<RoomSaveGame>();
-                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer,
-                        levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer,
-                        levelContainer.GetRoomSpawnerPoints,
-                        levelContainer.GetLauchCount, levelContainer.GetJumpCount,levelContainer.GetMinUnitWinCondition);
-
-                }
-                else
-                {
-                    InitRoomFromSave(SaveGameSystem.GetGameData);
-                }
-            }
-        }
-    }
-    public void OnLevelComplete()
-    {
-        _currentRoomInteract = null;
-        GameObject nextLevel = _stageManager.LoadNextLevel();
-        if (nextLevel != null)
-        {
-            
-            LoadLevel(nextLevel);
-        }
-    }
-    public void RestartCurrentLevel()
-    {
-        GameObject currentLevel = _stageManager.RestartLevel();
-        if (currentLevel != null)
-        {
-            LoadLevel(currentLevel);
-        }
-    }
-    #endregion
     #region UNIT API
+    private void CheckUnitMoveToBlock(List<Gateway> _gateWays)
+    {
+        foreach (var gateway in _gateWays)
+        {
+            bool canDequeueUnit = false;
+            gateway.DequeueUnitLoop((unit) =>
+            {
+                if (unit != null)
+                {
+                    Block block = GetBlockValiable(gateway.GetConnectedCell, gateway.GetDirection(), unit.GetOccupierType(), out List<Cell> cellPath);
+                    if (block == null)
+                    {
+                        return false;
+                    }
+                    canDequeueUnit = true;
+                    block.SetOccupier(unit);
+                    List<Vector3> pathPositions = cellPath.Select(cell => cell.transform.position).ToList();
+                    unit.MoveTo(pathPositions, onDestination: true);
+                    DequeueUnit(gateway);
+                    AddUnitOnMoving(unit);
+                    unit.OnDestination += HandleUnitOndestination;
+                    return true;
+
+                }
+                return false;
+            });
+            if (canDequeueUnit)
+            {
+                gateway.UpdateUnitQueuePosition();
+            }
+
+        }
+
+    }
+    public void AddUnitOnMoving(Unit unit)
+    {
+        if (!_unitOnDestinationDict.ContainsKey(unit))
+        {
+            _unitOnDestinationDict.Add(unit, false);
+
+        }
+        else
+        {
+            _unitOnDestinationDict[unit] = false;
+        }
+    }
+    public void SetUnitOnDestination(Unit unit)
+    {
+        if (!_unitOnDestinationDict.ContainsKey(unit)) return;
+        _unitOnDestinationDict[unit] = true;
+    }
+    public bool CheckAllUnitOndestination()
+    {
+        return _unitOnDestinationDict.All(x => x.Value == true);
+    }
     public List<Block> GetBlocksPlacable()
     {
         return _blockPlacedOnCell.Keys.Where(x => !x.IsFullOccupier()).ToList();
@@ -1314,15 +1168,164 @@ public class RoomSort2DGameManager : IDisposable
         SaveGameSystem.SaveGameData();
 #endif
     }
-    
     #endregion
+    #region HANDLE
+    private int HandleLauch()
+    {
+        if (_lauchCount <= 0)
+        {
+
+            return -1;
+        }
+        bool result = false;
+        foreach (var room in _rooms.ToList())
+        {
+            if (room.IsComplete())
+            {
+                result = true;
+                HandleCompleteRoom(room);
+            }
+        }
+        if (result)
+        {
+            _lauchCount--;
+            if (_lauchCount <= 0)
+            {
+                if (CheckAllUnitOndestination())
+                {
+                    GameEnd();
+                }
+            }
+            return _lauchCount;
+
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    private int HandleLauchAll()
+    {
+        if (_lauchCount <= 0)
+        {
+            return -1;
+        }
+        List<Cell> cellsPlacable = GetCellPlaced();
+        if (cellsPlacable.Count == 0) return -1;
+        if (!CheckAllUnitOndestination()) return -1;
+        bool result = true;
+        ClearAllRoom(_rooms, _architecture);
+        if (result)
+        {
+            _lauchCount--;
+            if (CheckEndGame())
+            {
+                GameEnd();
+            }
+            return _lauchCount;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    private bool HandleJump()
+    {
+        if (_jumpCount <= 0)
+        {
+            return false;
+        }
+        Queue<Unit> unitQueue = GetAllUnitQueue(_gateWays);
+        if (unitQueue == null) return false;
+        Unit firstUnit = unitQueue.Dequeue();
+        if (firstUnit == null) return false;
+
+        List<Block> blocksPlacable = GetBlocksPlacable();
+        blocksPlacable = blocksPlacable.Where(x => x.GetCodeName() == firstUnit.GetCodeName()).ToList();
+
+        if (blocksPlacable == null || blocksPlacable.Count == 0) return false;
+        _currentUnitJump = firstUnit;
+        SwitchRayCastMode(RaycastMode.JUMP);
+        foreach (var block in blocksPlacable)
+        {
+            block.ActiveOutline(true);
+        }
+        return true;
+
+    }
+    private void HandleUnitOndestination(Unit unit)
+    {
+        SetUnitOnDestination(unit);
+        if (!CheckEndGame()) return;
+        if (!CheckAllUnitOndestination()) return;
+        GameEnd();
+    }
+    private void HandleGateWayComplete()
+    {
+    }
+    #endregion
+    #region STAGE API
+    public void LoadInitialLevel(StageManager stageManager)
+    {
+        GameObject level = stageManager.GetCurrentLevelPrefab();
+        if (level != null)
+        {
+            LoadLevel(level);
+        }
+    }
+    private void LoadLevel(GameObject level)
+    {
+        if (level != null)
+        {
+            LevelContainer levelContainer = _gameView.SpawnLevel(level, Vector3.zero, Quaternion.identity);
+
+            if (levelContainer != null)
+            {
+                _levelContainer = levelContainer;
+                InitLevel(levelContainer.GetRoomConfigContainer, levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer, levelContainer.GetRoomSpawnerPoints, levelContainer.GetRoomStaticContainer);
+                //Save Game
+                if (SaveGameSystem.GetGameData.RoomPlacedSaveGames == null)
+                {
+                    //SaveGameSystem.GetGameData.RoomPlacedSaveGames = new List<RoomSaveGame>();
+                    InitRoomFromView(levelContainer.GetRoomConfigContainer, levelContainer.GetRoomStaticContainer,
+                        levelContainer.GetArchitectureContainer, levelContainer.GetGateWayContainer,
+                        levelContainer.GetRoomSpawnerPoints,
+                        levelContainer.GetLauchCount, levelContainer.GetJumpCount, levelContainer.GetMinUnitWinCondition);
+
+                }
+                else
+                {
+                    InitRoomFromSave(SaveGameSystem.GetGameData);
+                }
+            }
+        }
+    }
+    public void OnLevelComplete()
+    {
+        _currentRoomInteract = null;
+        GameObject nextLevel = _stageManager.LoadNextLevel();
+        if (nextLevel != null)
+        {
+
+            LoadLevel(nextLevel);
+        }
+    }
+    public void RestartCurrentLevel()
+    {
+        GameObject currentLevel = _stageManager.RestartLevel();
+        if (currentLevel != null)
+        {
+            LoadLevel(currentLevel);
+        }
+    }
+    #endregion
+
 }
 [Serializable]
 public class roomRaycastCheck
 {
     public GameObject RoomGO;
     public List<BlockRaycast> BlockRaycasts;
-
     public roomRaycastCheck(GameObject roomGO)
     {
         RoomGO = roomGO;
